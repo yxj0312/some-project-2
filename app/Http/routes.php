@@ -18,9 +18,12 @@ Route::get('/', function () {
 });
 
 
+
 Route::auth();
 
-Route::get('/home', 'HomeController@index');
+Route::resource('flyers', 'FlyersController');
+
+Route::get('/home', 'HomeController@index'); 
 Route::get('/welcome', 'HomeController@welcome');
 Route::get('/cards', 'Cards\CardsController@index');
 Route::get('/cards/{foobar}', 'Cards\CardsController@show');
