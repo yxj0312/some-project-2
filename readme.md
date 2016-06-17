@@ -1,4 +1,4 @@
-# Test Program for Laravel Framework - Projectflyer from Jeffery's Lessons
+# Test Program for Laravel Framework - Projectflyer from Jeffrey's Lessons
 
 [![Build Status](https://travis-ci.org/laravel/framework.svg)](https://travis-ci.org/laravel/framework)
 [![Total Downloads](https://poser.pugx.org/laravel/framework/d/total.svg)](https://packagist.org/packages/laravel/framework)
