@@ -16,7 +16,7 @@ class HomeController extends Controller
     {
         // $this->middleware('auth',['except' => ['index']]);
         $this->middleware('auth',['except'=>['welcome']]);
-        $this->middleware('admin',['except'=>['welcome']]);
+        // $this->middleware('admin',['except'=>['welcome']]);
     }
 
     /**
