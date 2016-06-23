@@ -45,10 +45,10 @@
 			</div>
 			
 
-			<div class="form-group">
+			<!-- <div class="form-group">
 				<label for="photos">Photos:</label>
 				<input type="file" name="photos" class="form-control" id="photos" value="{{old('photos')}}" placeholder="" required>
 
-			</div>
+			</div> -->
 
 			<button type="submit" class="btn btn-primary">Create Flyer</button>

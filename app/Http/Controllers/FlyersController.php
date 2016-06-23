@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request\FlyerRequest;
+use Illuminate\Http\Request;
 
-use App\Http\Requests;
-
+// use App\Http\Requests;
+use App\Http\Requests\FlyerRequest;
+use App\Flyer;
 
 class FlyersController extends Controller
 {
@@ -28,6 +29,7 @@ class FlyersController extends Controller
     {
         //create the flyer
         // $request->all()
+
         return view('flyers.create');
     }
 
@@ -47,7 +49,17 @@ class FlyersController extends Controller
         // $this->validate();
 
         // persist the flyer
-        App\Flyer::create($request->all());
+        Flyer::create($request->all());
+
+        //flash messaging
+        flash('Flyer successfully created');
+        // session()->flash('flash_message','Flyer successfully created');
+
+        // @if (session()->has('flash_message')) {
+        //     <div class="alert">
+
+        // }
+        return redirect()->back(); //temporary
 
         // redirect to landing page
     }
