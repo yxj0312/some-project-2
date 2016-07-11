@@ -99,9 +99,9 @@
         <script src="/js/libs.js">
         </script>
          @include('flash')
-        {{--
-        <script src="{{ elixir('js/app.js') }}">
+        
+        <script src="{{ asset('/js/app.js') }} ">
         </script>
-        --}}
+        
     </body>
 </html>

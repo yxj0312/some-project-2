@@ -28,3 +28,6 @@ Route::get('/welcome', 'HomeController@welcome');
 Route::get('/cards', 'Cards\CardsController@index');
 Route::get('/cards/{foobar}', 'Cards\CardsController@show');
 Route::get('/cards/create', 'Cards\CardsController@create');
+
+
+// Route::resource('lessons','LessonsController');
