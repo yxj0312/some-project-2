@@ -40,3 +40,10 @@ $factory->define(App\Flyer::class, function (Faker\Generator $faker) {
         'description'=> $faker->paragraphs(3,true)
     ];
 });
+
+
+$factory->define(App\Task::class, function (Faker\Generator $faker) {
+    return [
+        'body' => $faker->paragraph
+    ];
+});

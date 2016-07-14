@@ -30,4 +30,17 @@ Route::get('/cards/{foobar}', 'Cards\CardsController@show');
 Route::get('/cards/create', 'Cards\CardsController@create');
 
 
+Route::get('api/tasks',function(){
+	 return App\Task::latest()->get();
+});
+Route::get('/tasks',function(){
+	// $tasks = App\Task::latest()->get();
+
+	// return view('tasks.home',compact('tasks'));
+		return view('tasks.home');
+});
 // Route::resource('lessons','LessonsController');
+// 
+Route::delete('/tasks/{task}',function(App\Task $task){
+	$task->delete();
+});

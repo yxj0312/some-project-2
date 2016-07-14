@@ -401,6 +401,1319 @@ function format (id) {
 }
 
 },{}],3:[function(require,module,exports){
+/*!
+ * vue-resource v0.9.3
+ * https://github.com/vuejs/vue-resource
+ * Released under the MIT License.
+ */
+
+'use strict';
+
+/**
+ * Promises/A+ polyfill v1.1.4 (https://github.com/bramstein/promis)
+ */
+
+var RESOLVED = 0;
+var REJECTED = 1;
+var PENDING = 2;
+
+function Promise$2(executor) {
+
+    this.state = PENDING;
+    this.value = undefined;
+    this.deferred = [];
+
+    var promise = this;
+
+    try {
+        executor(function (x) {
+            promise.resolve(x);
+        }, function (r) {
+            promise.reject(r);
+        });
+    } catch (e) {
+        promise.reject(e);
+    }
+}
+
+Promise$2.reject = function (r) {
+    return new Promise$2(function (resolve, reject) {
+        reject(r);
+    });
+};
+
+Promise$2.resolve = function (x) {
+    return new Promise$2(function (resolve, reject) {
+        resolve(x);
+    });
+};
+
+Promise$2.all = function all(iterable) {
+    return new Promise$2(function (resolve, reject) {
+        var count = 0,
+            result = [];
+
+        if (iterable.length === 0) {
+            resolve(result);
+        }
+
+        function resolver(i) {
+            return function (x) {
+                result[i] = x;
+                count += 1;
+
+                if (count === iterable.length) {
+                    resolve(result);
+                }
+            };
+        }
+
+        for (var i = 0; i < iterable.length; i += 1) {
+            Promise$2.resolve(iterable[i]).then(resolver(i), reject);
+        }
+    });
+};
+
+Promise$2.race = function race(iterable) {
+    return new Promise$2(function (resolve, reject) {
+        for (var i = 0; i < iterable.length; i += 1) {
+            Promise$2.resolve(iterable[i]).then(resolve, reject);
+        }
+    });
+};
+
+var p$1 = Promise$2.prototype;
+
+p$1.resolve = function resolve(x) {
+    var promise = this;
+
+    if (promise.state === PENDING) {
+        if (x === promise) {
+            throw new TypeError('Promise settled with itself.');
+        }
+
+        var called = false;
+
+        try {
+            var then = x && x['then'];
+
+            if (x !== null && typeof x === 'object' && typeof then === 'function') {
+                then.call(x, function (x) {
+                    if (!called) {
+                        promise.resolve(x);
+                    }
+                    called = true;
+                }, function (r) {
+                    if (!called) {
+                        promise.reject(r);
+                    }
+                    called = true;
+                });
+                return;
+            }
+        } catch (e) {
+            if (!called) {
+                promise.reject(e);
+            }
+            return;
+        }
+
+        promise.state = RESOLVED;
+        promise.value = x;
+        promise.notify();
+    }
+};
+
+p$1.reject = function reject(reason) {
+    var promise = this;
+
+    if (promise.state === PENDING) {
+        if (reason === promise) {
+            throw new TypeError('Promise settled with itself.');
+        }
+
+        promise.state = REJECTED;
+        promise.value = reason;
+        promise.notify();
+    }
+};
+
+p$1.notify = function notify() {
+    var promise = this;
+
+    nextTick(function () {
+        if (promise.state !== PENDING) {
+            while (promise.deferred.length) {
+                var deferred = promise.deferred.shift(),
+                    onResolved = deferred[0],
+                    onRejected = deferred[1],
+                    resolve = deferred[2],
+                    reject = deferred[3];
+
+                try {
+                    if (promise.state === RESOLVED) {
+                        if (typeof onResolved === 'function') {
+                            resolve(onResolved.call(undefined, promise.value));
+                        } else {
+                            resolve(promise.value);
+                        }
+                    } else if (promise.state === REJECTED) {
+                        if (typeof onRejected === 'function') {
+                            resolve(onRejected.call(undefined, promise.value));
+                        } else {
+                            reject(promise.value);
+                        }
+                    }
+                } catch (e) {
+                    reject(e);
+                }
+            }
+        }
+    });
+};
+
+p$1.then = function then(onResolved, onRejected) {
+    var promise = this;
+
+    return new Promise$2(function (resolve, reject) {
+        promise.deferred.push([onResolved, onRejected, resolve, reject]);
+        promise.notify();
+    });
+};
+
+p$1.catch = function (onRejected) {
+    return this.then(undefined, onRejected);
+};
+
+var PromiseObj = window.Promise || Promise$2;
+
+function Promise$1(executor, context) {
+
+    if (executor instanceof PromiseObj) {
+        this.promise = executor;
+    } else {
+        this.promise = new PromiseObj(executor.bind(context));
+    }
+
+    this.context = context;
+}
+
+Promise$1.all = function (iterable, context) {
+    return new Promise$1(PromiseObj.all(iterable), context);
+};
+
+Promise$1.resolve = function (value, context) {
+    return new Promise$1(PromiseObj.resolve(value), context);
+};
+
+Promise$1.reject = function (reason, context) {
+    return new Promise$1(PromiseObj.reject(reason), context);
+};
+
+Promise$1.race = function (iterable, context) {
+    return new Promise$1(PromiseObj.race(iterable), context);
+};
+
+var p = Promise$1.prototype;
+
+p.bind = function (context) {
+    this.context = context;
+    return this;
+};
+
+p.then = function (fulfilled, rejected) {
+
+    if (fulfilled && fulfilled.bind && this.context) {
+        fulfilled = fulfilled.bind(this.context);
+    }
+
+    if (rejected && rejected.bind && this.context) {
+        rejected = rejected.bind(this.context);
+    }
+
+    return new Promise$1(this.promise.then(fulfilled, rejected), this.context);
+};
+
+p.catch = function (rejected) {
+
+    if (rejected && rejected.bind && this.context) {
+        rejected = rejected.bind(this.context);
+    }
+
+    return new Promise$1(this.promise.catch(rejected), this.context);
+};
+
+p.finally = function (callback) {
+
+    return this.then(function (value) {
+        callback.call(this);
+        return value;
+    }, function (reason) {
+        callback.call(this);
+        return PromiseObj.reject(reason);
+    });
+};
+
+var debug = false;
+var util = {};
+var array = [];
+function Util (Vue) {
+    util = Vue.util;
+    debug = Vue.config.debug || !Vue.config.silent;
+}
+
+function warn(msg) {
+    if (typeof console !== 'undefined' && debug) {
+        console.warn('[VueResource warn]: ' + msg);
+    }
+}
+
+function error(msg) {
+    if (typeof console !== 'undefined') {
+        console.error(msg);
+    }
+}
+
+function nextTick(cb, ctx) {
+    return util.nextTick(cb, ctx);
+}
+
+function trim(str) {
+    return str.replace(/^\s*|\s*$/g, '');
+}
+
+var isArray = Array.isArray;
+
+function isString(val) {
+    return typeof val === 'string';
+}
+
+function isBoolean(val) {
+    return val === true || val === false;
+}
+
+function isFunction(val) {
+    return typeof val === 'function';
+}
+
+function isObject(obj) {
+    return obj !== null && typeof obj === 'object';
+}
+
+function isPlainObject(obj) {
+    return isObject(obj) && Object.getPrototypeOf(obj) == Object.prototype;
+}
+
+function isFormData(obj) {
+    return typeof FormData !== 'undefined' && obj instanceof FormData;
+}
+
+function when(value, fulfilled, rejected) {
+
+    var promise = Promise$1.resolve(value);
+
+    if (arguments.length < 2) {
+        return promise;
+    }
+
+    return promise.then(fulfilled, rejected);
+}
+
+function options(fn, obj, opts) {
+
+    opts = opts || {};
+
+    if (isFunction(opts)) {
+        opts = opts.call(obj);
+    }
+
+    return merge(fn.bind({ $vm: obj, $options: opts }), fn, { $options: opts });
+}
+
+function each(obj, iterator) {
+
+    var i, key;
+
+    if (typeof obj.length == 'number') {
+        for (i = 0; i < obj.length; i++) {
+            iterator.call(obj[i], obj[i], i);
+        }
+    } else if (isObject(obj)) {
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                iterator.call(obj[key], obj[key], key);
+            }
+        }
+    }
+
+    return obj;
+}
+
+var assign = Object.assign || _assign;
+
+function merge(target) {
+
+    var args = array.slice.call(arguments, 1);
+
+    args.forEach(function (source) {
+        _merge(target, source, true);
+    });
+
+    return target;
+}
+
+function defaults(target) {
+
+    var args = array.slice.call(arguments, 1);
+
+    args.forEach(function (source) {
+
+        for (var key in source) {
+            if (target[key] === undefined) {
+                target[key] = source[key];
+            }
+        }
+    });
+
+    return target;
+}
+
+function _assign(target) {
+
+    var args = array.slice.call(arguments, 1);
+
+    args.forEach(function (source) {
+        _merge(target, source);
+    });
+
+    return target;
+}
+
+function _merge(target, source, deep) {
+    for (var key in source) {
+        if (deep && (isPlainObject(source[key]) || isArray(source[key]))) {
+            if (isPlainObject(source[key]) && !isPlainObject(target[key])) {
+                target[key] = {};
+            }
+            if (isArray(source[key]) && !isArray(target[key])) {
+                target[key] = [];
+            }
+            _merge(target[key], source[key], deep);
+        } else if (source[key] !== undefined) {
+            target[key] = source[key];
+        }
+    }
+}
+
+function root (options, next) {
+
+    var url = next(options);
+
+    if (isString(options.root) && !url.match(/^(https?:)?\//)) {
+        url = options.root + '/' + url;
+    }
+
+    return url;
+}
+
+function query (options, next) {
+
+    var urlParams = Object.keys(Url.options.params),
+        query = {},
+        url = next(options);
+
+    each(options.params, function (value, key) {
+        if (urlParams.indexOf(key) === -1) {
+            query[key] = value;
+        }
+    });
+
+    query = Url.params(query);
+
+    if (query) {
+        url += (url.indexOf('?') == -1 ? '?' : '&') + query;
+    }
+
+    return url;
+}
+
+/**
+ * URL Template v2.0.6 (https://github.com/bramstein/url-template)
+ */
+
+function expand(url, params, variables) {
+
+    var tmpl = parse(url),
+        expanded = tmpl.expand(params);
+
+    if (variables) {
+        variables.push.apply(variables, tmpl.vars);
+    }
+
+    return expanded;
+}
+
+function parse(template) {
+
+    var operators = ['+', '#', '.', '/', ';', '?', '&'],
+        variables = [];
+
+    return {
+        vars: variables,
+        expand: function (context) {
+            return template.replace(/\{([^\{\}]+)\}|([^\{\}]+)/g, function (_, expression, literal) {
+                if (expression) {
+
+                    var operator = null,
+                        values = [];
+
+                    if (operators.indexOf(expression.charAt(0)) !== -1) {
+                        operator = expression.charAt(0);
+                        expression = expression.substr(1);
+                    }
+
+                    expression.split(/,/g).forEach(function (variable) {
+                        var tmp = /([^:\*]*)(?::(\d+)|(\*))?/.exec(variable);
+                        values.push.apply(values, getValues(context, operator, tmp[1], tmp[2] || tmp[3]));
+                        variables.push(tmp[1]);
+                    });
+
+                    if (operator && operator !== '+') {
+
+                        var separator = ',';
+
+                        if (operator === '?') {
+                            separator = '&';
+                        } else if (operator !== '#') {
+                            separator = operator;
+                        }
+
+                        return (values.length !== 0 ? operator : '') + values.join(separator);
+                    } else {
+                        return values.join(',');
+                    }
+                } else {
+                    return encodeReserved(literal);
+                }
+            });
+        }
+    };
+}
+
+function getValues(context, operator, key, modifier) {
+
+    var value = context[key],
+        result = [];
+
+    if (isDefined(value) && value !== '') {
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+            value = value.toString();
+
+            if (modifier && modifier !== '*') {
+                value = value.substring(0, parseInt(modifier, 10));
+            }
+
+            result.push(encodeValue(operator, value, isKeyOperator(operator) ? key : null));
+        } else {
+            if (modifier === '*') {
+                if (Array.isArray(value)) {
+                    value.filter(isDefined).forEach(function (value) {
+                        result.push(encodeValue(operator, value, isKeyOperator(operator) ? key : null));
+                    });
+                } else {
+                    Object.keys(value).forEach(function (k) {
+                        if (isDefined(value[k])) {
+                            result.push(encodeValue(operator, value[k], k));
+                        }
+                    });
+                }
+            } else {
+                var tmp = [];
+
+                if (Array.isArray(value)) {
+                    value.filter(isDefined).forEach(function (value) {
+                        tmp.push(encodeValue(operator, value));
+                    });
+                } else {
+                    Object.keys(value).forEach(function (k) {
+                        if (isDefined(value[k])) {
+                            tmp.push(encodeURIComponent(k));
+                            tmp.push(encodeValue(operator, value[k].toString()));
+                        }
+                    });
+                }
+
+                if (isKeyOperator(operator)) {
+                    result.push(encodeURIComponent(key) + '=' + tmp.join(','));
+                } else if (tmp.length !== 0) {
+                    result.push(tmp.join(','));
+                }
+            }
+        }
+    } else {
+        if (operator === ';') {
+            result.push(encodeURIComponent(key));
+        } else if (value === '' && (operator === '&' || operator === '?')) {
+            result.push(encodeURIComponent(key) + '=');
+        } else if (value === '') {
+            result.push('');
+        }
+    }
+
+    return result;
+}
+
+function isDefined(value) {
+    return value !== undefined && value !== null;
+}
+
+function isKeyOperator(operator) {
+    return operator === ';' || operator === '&' || operator === '?';
+}
+
+function encodeValue(operator, value, key) {
+
+    value = operator === '+' || operator === '#' ? encodeReserved(value) : encodeURIComponent(value);
+
+    if (key) {
+        return encodeURIComponent(key) + '=' + value;
+    } else {
+        return value;
+    }
+}
+
+function encodeReserved(str) {
+    return str.split(/(%[0-9A-Fa-f]{2})/g).map(function (part) {
+        if (!/%[0-9A-Fa-f]/.test(part)) {
+            part = encodeURI(part);
+        }
+        return part;
+    }).join('');
+}
+
+function template (options) {
+
+    var variables = [],
+        url = expand(options.url, options.params, variables);
+
+    variables.forEach(function (key) {
+        delete options.params[key];
+    });
+
+    return url;
+}
+
+/**
+ * Service for URL templating.
+ */
+
+var ie = document.documentMode;
+var el = document.createElement('a');
+
+function Url(url, params) {
+
+    var self = this || {},
+        options = url,
+        transform;
+
+    if (isString(url)) {
+        options = { url: url, params: params };
+    }
+
+    options = merge({}, Url.options, self.$options, options);
+
+    Url.transforms.forEach(function (handler) {
+        transform = factory(handler, transform, self.$vm);
+    });
+
+    return transform(options);
+}
+
+/**
+ * Url options.
+ */
+
+Url.options = {
+    url: '',
+    root: null,
+    params: {}
+};
+
+/**
+ * Url transforms.
+ */
+
+Url.transforms = [template, query, root];
+
+/**
+ * Encodes a Url parameter string.
+ *
+ * @param {Object} obj
+ */
+
+Url.params = function (obj) {
+
+    var params = [],
+        escape = encodeURIComponent;
+
+    params.add = function (key, value) {
+
+        if (isFunction(value)) {
+            value = value();
+        }
+
+        if (value === null) {
+            value = '';
+        }
+
+        this.push(escape(key) + '=' + escape(value));
+    };
+
+    serialize(params, obj);
+
+    return params.join('&').replace(/%20/g, '+');
+};
+
+/**
+ * Parse a URL and return its components.
+ *
+ * @param {String} url
+ */
+
+Url.parse = function (url) {
+
+    if (ie) {
+        el.href = url;
+        url = el.href;
+    }
+
+    el.href = url;
+
+    return {
+        href: el.href,
+        protocol: el.protocol ? el.protocol.replace(/:$/, '') : '',
+        port: el.port,
+        host: el.host,
+        hostname: el.hostname,
+        pathname: el.pathname.charAt(0) === '/' ? el.pathname : '/' + el.pathname,
+        search: el.search ? el.search.replace(/^\?/, '') : '',
+        hash: el.hash ? el.hash.replace(/^#/, '') : ''
+    };
+};
+
+function factory(handler, next, vm) {
+    return function (options) {
+        return handler.call(vm, options, next);
+    };
+}
+
+function serialize(params, obj, scope) {
+
+    var array = isArray(obj),
+        plain = isPlainObject(obj),
+        hash;
+
+    each(obj, function (value, key) {
+
+        hash = isObject(value) || isArray(value);
+
+        if (scope) {
+            key = scope + '[' + (plain || hash ? key : '') + ']';
+        }
+
+        if (!scope && array) {
+            params.add(value.name, value.value);
+        } else if (hash) {
+            serialize(params, value, key);
+        } else {
+            params.add(key, value);
+        }
+    });
+}
+
+function xdrClient (request) {
+    return new Promise$1(function (resolve) {
+
+        var xdr = new XDomainRequest(),
+            handler = function (event) {
+
+            var response = request.respondWith(xdr.responseText, {
+                status: xdr.status,
+                statusText: xdr.statusText
+            });
+
+            resolve(response);
+        };
+
+        request.abort = function () {
+            return xdr.abort();
+        };
+
+        xdr.open(request.method, request.getUrl(), true);
+        xdr.timeout = 0;
+        xdr.onload = handler;
+        xdr.onerror = handler;
+        xdr.ontimeout = function () {};
+        xdr.onprogress = function () {};
+        xdr.send(request.getBody());
+    });
+}
+
+var ORIGIN_URL = Url.parse(location.href);
+var SUPPORTS_CORS = 'withCredentials' in new XMLHttpRequest();
+
+function cors (request, next) {
+
+    if (!isBoolean(request.crossOrigin) && crossOrigin(request)) {
+        request.crossOrigin = true;
+    }
+
+    if (request.crossOrigin) {
+
+        if (!SUPPORTS_CORS) {
+            request.client = xdrClient;
+        }
+
+        delete request.emulateHTTP;
+    }
+
+    next();
+}
+
+function crossOrigin(request) {
+
+    var requestUrl = Url.parse(Url(request));
+
+    return requestUrl.protocol !== ORIGIN_URL.protocol || requestUrl.host !== ORIGIN_URL.host;
+}
+
+function body (request, next) {
+
+    if (request.emulateJSON && isPlainObject(request.body)) {
+        request.body = Url.params(request.body);
+        request.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    }
+
+    if (isFormData(request.body)) {
+        delete request.headers['Content-Type'];
+    }
+
+    if (isPlainObject(request.body)) {
+        request.body = JSON.stringify(request.body);
+    }
+
+    next(function (response) {
+
+        var contentType = response.headers['Content-Type'];
+
+        if (isString(contentType) && contentType.indexOf('application/json') === 0) {
+
+            try {
+                response.data = response.json();
+            } catch (e) {
+                response.data = null;
+            }
+        } else {
+            response.data = response.text();
+        }
+    });
+}
+
+function jsonpClient (request) {
+    return new Promise$1(function (resolve) {
+
+        var name = request.jsonp || 'callback',
+            callback = '_jsonp' + Math.random().toString(36).substr(2),
+            body = null,
+            handler,
+            script;
+
+        handler = function (event) {
+
+            var status = 0;
+
+            if (event.type === 'load' && body !== null) {
+                status = 200;
+            } else if (event.type === 'error') {
+                status = 404;
+            }
+
+            resolve(request.respondWith(body, { status: status }));
+
+            delete window[callback];
+            document.body.removeChild(script);
+        };
+
+        request.params[name] = callback;
+
+        window[callback] = function (result) {
+            body = JSON.stringify(result);
+        };
+
+        script = document.createElement('script');
+        script.src = request.getUrl();
+        script.type = 'text/javascript';
+        script.async = true;
+        script.onload = handler;
+        script.onerror = handler;
+
+        document.body.appendChild(script);
+    });
+}
+
+function jsonp (request, next) {
+
+    if (request.method == 'JSONP') {
+        request.client = jsonpClient;
+    }
+
+    next(function (response) {
+
+        if (request.method == 'JSONP') {
+            response.data = response.json();
+        }
+    });
+}
+
+function before (request, next) {
+
+    if (isFunction(request.before)) {
+        request.before.call(this, request);
+    }
+
+    next();
+}
+
+/**
+ * HTTP method override Interceptor.
+ */
+
+function method (request, next) {
+
+    if (request.emulateHTTP && /^(PUT|PATCH|DELETE)$/i.test(request.method)) {
+        request.headers['X-HTTP-Method-Override'] = request.method;
+        request.method = 'POST';
+    }
+
+    next();
+}
+
+function header (request, next) {
+
+    request.method = request.method.toUpperCase();
+    request.headers = assign({}, Http.headers.common, !request.crossOrigin ? Http.headers.custom : {}, Http.headers[request.method.toLowerCase()], request.headers);
+
+    next();
+}
+
+/**
+ * Timeout Interceptor.
+ */
+
+function timeout (request, next) {
+
+    var timeout;
+
+    if (request.timeout) {
+        timeout = setTimeout(function () {
+            request.abort();
+        }, request.timeout);
+    }
+
+    next(function (response) {
+
+        clearTimeout(timeout);
+    });
+}
+
+function xhrClient (request) {
+    return new Promise$1(function (resolve) {
+
+        var xhr = new XMLHttpRequest(),
+            handler = function (event) {
+
+            var response = request.respondWith('response' in xhr ? xhr.response : xhr.responseText, {
+                status: xhr.status === 1223 ? 204 : xhr.status, // IE9 status bug
+                statusText: xhr.status === 1223 ? 'No Content' : trim(xhr.statusText),
+                headers: parseHeaders(xhr.getAllResponseHeaders())
+            });
+
+            resolve(response);
+        };
+
+        request.abort = function () {
+            return xhr.abort();
+        };
+
+        xhr.open(request.method, request.getUrl(), true);
+        xhr.timeout = 0;
+        xhr.onload = handler;
+        xhr.onerror = handler;
+
+        if (request.progress) {
+            if (request.method === 'GET') {
+                xhr.addEventListener('progress', request.progress);
+            } else if (/^(POST|PUT)$/i.test(request.method)) {
+                xhr.upload.addEventListener('progress', request.progress);
+            }
+        }
+
+        if (request.credentials === true) {
+            xhr.withCredentials = true;
+        }
+
+        each(request.headers || {}, function (value, header) {
+            xhr.setRequestHeader(header, value);
+        });
+
+        xhr.send(request.getBody());
+    });
+}
+
+function parseHeaders(str) {
+
+    var headers = {},
+        value,
+        name,
+        i;
+
+    each(trim(str).split('\n'), function (row) {
+
+        i = row.indexOf(':');
+        name = trim(row.slice(0, i));
+        value = trim(row.slice(i + 1));
+
+        if (headers[name]) {
+
+            if (isArray(headers[name])) {
+                headers[name].push(value);
+            } else {
+                headers[name] = [headers[name], value];
+            }
+        } else {
+
+            headers[name] = value;
+        }
+    });
+
+    return headers;
+}
+
+function Client (context) {
+
+    var reqHandlers = [sendRequest],
+        resHandlers = [],
+        handler;
+
+    if (!isObject(context)) {
+        context = null;
+    }
+
+    function Client(request) {
+        return new Promise$1(function (resolve) {
+
+            function exec() {
+
+                handler = reqHandlers.pop();
+
+                if (isFunction(handler)) {
+                    handler.call(context, request, next);
+                } else {
+                    warn('Invalid interceptor of type ' + typeof handler + ', must be a function');
+                    next();
+                }
+            }
+
+            function next(response) {
+
+                if (isFunction(response)) {
+
+                    resHandlers.unshift(response);
+                } else if (isObject(response)) {
+
+                    resHandlers.forEach(function (handler) {
+                        response = when(response, function (response) {
+                            return handler.call(context, response) || response;
+                        });
+                    });
+
+                    when(response, resolve);
+
+                    return;
+                }
+
+                exec();
+            }
+
+            exec();
+        }, context);
+    }
+
+    Client.use = function (handler) {
+        reqHandlers.push(handler);
+    };
+
+    return Client;
+}
+
+function sendRequest(request, resolve) {
+
+    var client = request.client || xhrClient;
+
+    resolve(client(request));
+}
+
+var classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+};
+
+/**
+ * HTTP Response.
+ */
+
+var Response = function () {
+    function Response(body, _ref) {
+        var url = _ref.url;
+        var headers = _ref.headers;
+        var status = _ref.status;
+        var statusText = _ref.statusText;
+        classCallCheck(this, Response);
+
+
+        this.url = url;
+        this.body = body;
+        this.headers = headers || {};
+        this.status = status || 0;
+        this.statusText = statusText || '';
+        this.ok = status >= 200 && status < 300;
+    }
+
+    Response.prototype.text = function text() {
+        return this.body;
+    };
+
+    Response.prototype.blob = function blob() {
+        return new Blob([this.body]);
+    };
+
+    Response.prototype.json = function json() {
+        return JSON.parse(this.body);
+    };
+
+    return Response;
+}();
+
+var Request = function () {
+    function Request(options) {
+        classCallCheck(this, Request);
+
+
+        this.method = 'GET';
+        this.body = null;
+        this.params = {};
+        this.headers = {};
+
+        assign(this, options);
+    }
+
+    Request.prototype.getUrl = function getUrl() {
+        return Url(this);
+    };
+
+    Request.prototype.getBody = function getBody() {
+        return this.body;
+    };
+
+    Request.prototype.respondWith = function respondWith(body, options) {
+        return new Response(body, assign(options || {}, { url: this.getUrl() }));
+    };
+
+    return Request;
+}();
+
+/**
+ * Service for sending network requests.
+ */
+
+var CUSTOM_HEADERS = { 'X-Requested-With': 'XMLHttpRequest' };
+var COMMON_HEADERS = { 'Accept': 'application/json, text/plain, */*' };
+var JSON_CONTENT_TYPE = { 'Content-Type': 'application/json;charset=utf-8' };
+
+function Http(options) {
+
+    var self = this || {},
+        client = Client(self.$vm);
+
+    defaults(options || {}, self.$options, Http.options);
+
+    Http.interceptors.forEach(function (handler) {
+        client.use(handler);
+    });
+
+    return client(new Request(options)).then(function (response) {
+
+        return response.ok ? response : Promise$1.reject(response);
+    }, function (response) {
+
+        if (response instanceof Error) {
+            error(response);
+        }
+
+        return Promise$1.reject(response);
+    });
+}
+
+Http.options = {};
+
+Http.headers = {
+    put: JSON_CONTENT_TYPE,
+    post: JSON_CONTENT_TYPE,
+    patch: JSON_CONTENT_TYPE,
+    delete: JSON_CONTENT_TYPE,
+    custom: CUSTOM_HEADERS,
+    common: COMMON_HEADERS
+};
+
+Http.interceptors = [before, timeout, method, body, jsonp, header, cors];
+
+['get', 'delete', 'head', 'jsonp'].forEach(function (method) {
+
+    Http[method] = function (url, options) {
+        return this(assign(options || {}, { url: url, method: method }));
+    };
+});
+
+['post', 'put', 'patch'].forEach(function (method) {
+
+    Http[method] = function (url, body, options) {
+        return this(assign(options || {}, { url: url, method: method, body: body }));
+    };
+});
+
+function Resource(url, params, actions, options) {
+
+    var self = this || {},
+        resource = {};
+
+    actions = assign({}, Resource.actions, actions);
+
+    each(actions, function (action, name) {
+
+        action = merge({ url: url, params: params || {} }, options, action);
+
+        resource[name] = function () {
+            return (self.$http || Http)(opts(action, arguments));
+        };
+    });
+
+    return resource;
+}
+
+function opts(action, args) {
+
+    var options = assign({}, action),
+        params = {},
+        body;
+
+    switch (args.length) {
+
+        case 2:
+
+            params = args[0];
+            body = args[1];
+
+            break;
+
+        case 1:
+
+            if (/^(POST|PUT|PATCH)$/i.test(options.method)) {
+                body = args[0];
+            } else {
+                params = args[0];
+            }
+
+            break;
+
+        case 0:
+
+            break;
+
+        default:
+
+            throw 'Expected up to 4 arguments [params, body], got ' + args.length + ' arguments';
+    }
+
+    options.body = body;
+    options.params = assign({}, options.params, params);
+
+    return options;
+}
+
+Resource.actions = {
+
+    get: { method: 'GET' },
+    save: { method: 'POST' },
+    query: { method: 'GET' },
+    update: { method: 'PUT' },
+    remove: { method: 'DELETE' },
+    delete: { method: 'DELETE' }
+
+};
+
+function plugin(Vue) {
+
+    if (plugin.installed) {
+        return;
+    }
+
+    Util(Vue);
+
+    Vue.url = Url;
+    Vue.http = Http;
+    Vue.resource = Resource;
+    Vue.Promise = Promise$1;
+
+    Object.defineProperties(Vue.prototype, {
+
+        $url: {
+            get: function () {
+                return options(Vue.url, this, this.$options.url);
+            }
+        },
+
+        $http: {
+            get: function () {
+                return options(Vue.http, this, this.$options.http);
+            }
+        },
+
+        $resource: {
+            get: function () {
+                return Vue.resource.bind(this);
+            }
+        },
+
+        $promise: {
+            get: function () {
+                var _this = this;
+
+                return function (executor) {
+                    return new Vue.Promise(executor, _this);
+                };
+            }
+        }
+
+    });
+}
+
+if (typeof window !== 'undefined' && window.Vue) {
+    window.Vue.use(plugin);
+}
+
+module.exports = plugin;
+},{}],4:[function(require,module,exports){
 var _ = require('../util')
 var Watcher = require('../watcher')
 var Path = require('../parsers/path')
@@ -576,7 +1889,7 @@ function clean (obj) {
   return JSON.parse(JSON.stringify(obj))
 }
 
-},{"../parsers/directive":53,"../parsers/expression":54,"../parsers/path":55,"../parsers/text":57,"../util":65,"../watcher":69}],4:[function(require,module,exports){
+},{"../parsers/directive":54,"../parsers/expression":55,"../parsers/path":56,"../parsers/text":58,"../util":66,"../watcher":70}],5:[function(require,module,exports){
 var _ = require('../util')
 var transition = require('../transition')
 
@@ -782,7 +2095,7 @@ function remove (el, vm, cb) {
   if (cb) cb()
 }
 
-},{"../transition":58,"../util":65}],5:[function(require,module,exports){
+},{"../transition":59,"../util":66}],6:[function(require,module,exports){
 var _ = require('../util')
 
 /**
@@ -953,7 +2266,7 @@ function modifyListenerCount (vm, event, count) {
   }
 }
 
-},{"../util":65}],6:[function(require,module,exports){
+},{"../util":66}],7:[function(require,module,exports){
 var _ = require('../util')
 var config = require('../config')
 
@@ -1107,7 +2420,7 @@ config._assetTypes.forEach(function (type) {
   }
 })
 
-},{"../compiler":12,"../config":14,"../directives/internal":21,"../fragment/factory":43,"../parsers/directive":53,"../parsers/expression":54,"../parsers/path":55,"../parsers/template":56,"../parsers/text":57,"../util":65}],7:[function(require,module,exports){
+},{"../compiler":13,"../config":15,"../directives/internal":22,"../fragment/factory":44,"../parsers/directive":54,"../parsers/expression":55,"../parsers/path":56,"../parsers/template":57,"../parsers/text":58,"../util":66}],8:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 var compiler = require('../compiler')
@@ -1179,7 +2492,7 @@ exports.$compile = function (el, host, scope, frag) {
 }
 
 }).call(this,require('_process'))
-},{"../compiler":12,"../util":65,"_process":1}],8:[function(require,module,exports){
+},{"../compiler":13,"../util":66,"_process":1}],9:[function(require,module,exports){
 (function (process){
 var _ = require('./util')
 var config = require('./config')
@@ -1281,7 +2594,7 @@ exports.push = function (watcher) {
 }
 
 }).call(this,require('_process'))
-},{"./config":14,"./util":65,"_process":1}],9:[function(require,module,exports){
+},{"./config":15,"./util":66,"_process":1}],10:[function(require,module,exports){
 /**
  * A doubly linked list-based Least Recently Used (LRU)
  * cache. Will keep most recently used items while
@@ -1395,7 +2708,7 @@ p.get = function (key, returnEntry) {
 
 module.exports = Cache
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 var dirParser = require('../parsers/directive')
@@ -1605,7 +2918,7 @@ function getDefault (vm, options) {
 }
 
 }).call(this,require('_process'))
-},{"../config":14,"../directives/internal/prop":22,"../parsers/directive":53,"../parsers/path":55,"../util":65,"_process":1}],11:[function(require,module,exports){
+},{"../config":15,"../directives/internal/prop":23,"../parsers/directive":54,"../parsers/path":56,"../util":66,"_process":1}],12:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 var publicDirectives = require('../directives/public')
@@ -2318,13 +3631,13 @@ function makeNodeLinkFn (directives) {
 }
 
 }).call(this,require('_process'))
-},{"../directives/internal":21,"../directives/public":31,"../parsers/directive":53,"../parsers/template":56,"../parsers/text":57,"../util":65,"./compile-props":10,"_process":1}],12:[function(require,module,exports){
+},{"../directives/internal":22,"../directives/public":32,"../parsers/directive":54,"../parsers/template":57,"../parsers/text":58,"../util":66,"./compile-props":11,"_process":1}],13:[function(require,module,exports){
 var _ = require('../util')
 
 _.extend(exports, require('./compile'))
 _.extend(exports, require('./transclude'))
 
-},{"../util":65,"./compile":11,"./transclude":13}],13:[function(require,module,exports){
+},{"../util":66,"./compile":12,"./transclude":14}],14:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 var templateParser = require('../parsers/template')
@@ -2476,7 +3789,7 @@ function mergeAttrs (from, to) {
 }
 
 }).call(this,require('_process'))
-},{"../parsers/template":56,"../util":65,"_process":1}],14:[function(require,module,exports){
+},{"../parsers/template":57,"../util":66,"_process":1}],15:[function(require,module,exports){
 module.exports = {
 
   /**
@@ -2582,7 +3895,7 @@ Object.defineProperty(module.exports, 'unsafeDelimiters', {
   }
 })
 
-},{"./parsers/text":57}],15:[function(require,module,exports){
+},{"./parsers/text":58}],16:[function(require,module,exports){
 (function (process){
 var _ = require('./util')
 var Watcher = require('./watcher')
@@ -2898,11 +4211,11 @@ Directive.prototype._teardown = function () {
 module.exports = Directive
 
 }).call(this,require('_process'))
-},{"./parsers/expression":54,"./util":65,"./watcher":69,"_process":1}],16:[function(require,module,exports){
+},{"./parsers/expression":55,"./util":66,"./watcher":70,"_process":1}],17:[function(require,module,exports){
 exports.slot = require('./slot')
 exports.partial = require('./partial')
 
-},{"./partial":17,"./slot":18}],17:[function(require,module,exports){
+},{"./partial":18,"./slot":19}],18:[function(require,module,exports){
 (function (process){
 var _ = require('../../util')
 var vIf = require('../public/if')
@@ -2949,7 +4262,7 @@ module.exports = {
 }
 
 }).call(this,require('_process'))
-},{"../../fragment/factory":43,"../../util":65,"../public/if":30,"_process":1}],18:[function(require,module,exports){
+},{"../../fragment/factory":44,"../../util":66,"../public/if":31,"_process":1}],19:[function(require,module,exports){
 var _ = require('../../util')
 var templateParser = require('../../parsers/template')
 
@@ -3075,7 +4388,7 @@ function extractFragment (nodes, parent, main) {
   }
 }
 
-},{"../../parsers/template":56,"../../util":65}],19:[function(require,module,exports){
+},{"../../parsers/template":57,"../../util":66}],20:[function(require,module,exports){
 var _ = require('../../util')
 var addClass = _.addClass
 var removeClass = _.removeClass
@@ -3146,7 +4459,7 @@ function contains (value, key) {
     : value.hasOwnProperty(key)
 }
 
-},{"../../util":65}],20:[function(require,module,exports){
+},{"../../util":66}],21:[function(require,module,exports){
 (function (process){
 var _ = require('../../util')
 var templateParser = require('../../parsers/template')
@@ -3481,14 +4794,14 @@ module.exports = {
 }
 
 }).call(this,require('_process'))
-},{"../../parsers/template":56,"../../util":65,"_process":1}],21:[function(require,module,exports){
+},{"../../parsers/template":57,"../../util":66,"_process":1}],22:[function(require,module,exports){
 exports.style = require('./style')
 exports['class'] = require('./class')
 exports.component = require('./component')
 exports.prop = require('./prop')
 exports.transition = require('./transition')
 
-},{"./class":19,"./component":20,"./prop":22,"./style":23,"./transition":24}],22:[function(require,module,exports){
+},{"./class":20,"./component":21,"./prop":23,"./style":24,"./transition":25}],23:[function(require,module,exports){
 // NOTE: the prop internal directive is compiled and linked
 // during _initScope(), before the created hook is called.
 // The purpose is to make the initial prop values available
@@ -3554,7 +4867,7 @@ module.exports = {
   }
 }
 
-},{"../../config":14,"../../util":65,"../../watcher":69}],23:[function(require,module,exports){
+},{"../../config":15,"../../util":66,"../../watcher":70}],24:[function(require,module,exports){
 var _ = require('../../util')
 var prefixes = ['-webkit-', '-moz-', '-ms-']
 var camelPrefixes = ['Webkit', 'Moz', 'ms']
@@ -3664,7 +4977,7 @@ function prefix (prop) {
   }
 }
 
-},{"../../util":65}],24:[function(require,module,exports){
+},{"../../util":66}],25:[function(require,module,exports){
 var _ = require('../../util')
 var Transition = require('../../transition/transition')
 
@@ -3686,7 +4999,7 @@ module.exports = {
   }
 }
 
-},{"../../transition/transition":60,"../../util":65}],25:[function(require,module,exports){
+},{"../../transition/transition":61,"../../util":66}],26:[function(require,module,exports){
 (function (process){
 var _ = require('../../util')
 
@@ -3796,7 +5109,7 @@ module.exports = {
 }
 
 }).call(this,require('_process'))
-},{"../../util":65,"_process":1}],26:[function(require,module,exports){
+},{"../../util":66,"_process":1}],27:[function(require,module,exports){
 module.exports = {
   bind: function () {
     var el = this.el
@@ -3806,7 +5119,7 @@ module.exports = {
   }
 }
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var _ = require('../../util')
 
 module.exports = {
@@ -3835,7 +5148,7 @@ module.exports = {
   }
 }
 
-},{"../../util":65}],28:[function(require,module,exports){
+},{"../../util":66}],29:[function(require,module,exports){
 (function (process){
 var _ = require('../../util')
 var FragmentFactory = require('../../fragment/factory')
@@ -4437,7 +5750,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 }).call(this,require('_process'))
-},{"../../fragment/factory":43,"../../util":65,"_process":1}],29:[function(require,module,exports){
+},{"../../fragment/factory":44,"../../util":66,"_process":1}],30:[function(require,module,exports){
 var _ = require('../../util')
 var templateParser = require('../../parsers/template')
 
@@ -4479,7 +5792,7 @@ module.exports = {
   }
 }
 
-},{"../../parsers/template":56,"../../util":65}],30:[function(require,module,exports){
+},{"../../parsers/template":57,"../../util":66}],31:[function(require,module,exports){
 (function (process){
 var _ = require('../../util')
 var FragmentFactory = require('../../fragment/factory')
@@ -4549,7 +5862,7 @@ module.exports = {
 }
 
 }).call(this,require('_process'))
-},{"../../fragment/factory":43,"../../util":65,"_process":1}],31:[function(require,module,exports){
+},{"../../fragment/factory":44,"../../util":66,"_process":1}],32:[function(require,module,exports){
 // text & html
 exports.text = require('./text')
 exports.html = require('./html')
@@ -4575,7 +5888,7 @@ exports.ref = require('./ref')
 // cloak
 exports.cloak = require('./cloak')
 
-},{"./bind":25,"./cloak":26,"./el":27,"./for":28,"./html":29,"./if":30,"./model":33,"./on":37,"./ref":38,"./show":39,"./text":40}],32:[function(require,module,exports){
+},{"./bind":26,"./cloak":27,"./el":28,"./for":29,"./html":30,"./if":31,"./model":34,"./on":38,"./ref":39,"./show":40,"./text":41}],33:[function(require,module,exports){
 var _ = require('../../../util')
 
 module.exports = {
@@ -4639,7 +5952,7 @@ module.exports = {
   }
 }
 
-},{"../../../util":65}],33:[function(require,module,exports){
+},{"../../../util":66}],34:[function(require,module,exports){
 (function (process){
 var _ = require('../../../util')
 
@@ -4725,7 +6038,7 @@ module.exports = {
 }
 
 }).call(this,require('_process'))
-},{"../../../util":65,"./checkbox":32,"./radio":34,"./select":35,"./text":36,"_process":1}],34:[function(require,module,exports){
+},{"../../../util":66,"./checkbox":33,"./radio":35,"./select":36,"./text":37,"_process":1}],35:[function(require,module,exports){
 var _ = require('../../../util')
 
 module.exports = {
@@ -4761,7 +6074,7 @@ module.exports = {
   }
 }
 
-},{"../../../util":65}],35:[function(require,module,exports){
+},{"../../../util":66}],36:[function(require,module,exports){
 var _ = require('../../../util')
 
 module.exports = {
@@ -4881,7 +6194,7 @@ function indexOf (arr, val) {
   return -1
 }
 
-},{"../../../util":65}],36:[function(require,module,exports){
+},{"../../../util":66}],37:[function(require,module,exports){
 var _ = require('../../../util')
 
 module.exports = {
@@ -5010,7 +6323,7 @@ module.exports = {
   }
 }
 
-},{"../../../util":65}],37:[function(require,module,exports){
+},{"../../../util":66}],38:[function(require,module,exports){
 (function (process){
 var _ = require('../../util')
 
@@ -5137,7 +6450,7 @@ module.exports = {
 }
 
 }).call(this,require('_process'))
-},{"../../util":65,"_process":1}],38:[function(require,module,exports){
+},{"../../util":66,"_process":1}],39:[function(require,module,exports){
 (function (process){
 if (process.env.NODE_ENV !== 'production') {
   module.exports = {
@@ -5151,7 +6464,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 }).call(this,require('_process'))
-},{"../../util":65,"_process":1}],39:[function(require,module,exports){
+},{"../../util":66,"_process":1}],40:[function(require,module,exports){
 var _ = require('../../util')
 var transition = require('../../transition')
 
@@ -5179,7 +6492,7 @@ module.exports = {
   }
 }
 
-},{"../../transition":58,"../../util":65}],40:[function(require,module,exports){
+},{"../../transition":59,"../../util":66}],41:[function(require,module,exports){
 var _ = require('../../util')
 
 module.exports = {
@@ -5195,7 +6508,7 @@ module.exports = {
   }
 }
 
-},{"../../util":65}],41:[function(require,module,exports){
+},{"../../util":66}],42:[function(require,module,exports){
 var _ = require('../util')
 var Path = require('../parsers/path')
 var toArray = require('../directives/public/for')._postProcess
@@ -5302,7 +6615,7 @@ function contains (val, search) {
   }
 }
 
-},{"../directives/public/for":28,"../parsers/path":55,"../util":65}],42:[function(require,module,exports){
+},{"../directives/public/for":29,"../parsers/path":56,"../util":66}],43:[function(require,module,exports){
 var _ = require('../util')
 
 /**
@@ -5422,7 +6735,7 @@ exports.debounce = function (handler, delay) {
 
 _.extend(exports, require('./array-filters'))
 
-},{"../util":65,"./array-filters":41}],43:[function(require,module,exports){
+},{"../util":66,"./array-filters":42}],44:[function(require,module,exports){
 var _ = require('../util')
 var compiler = require('../compiler')
 var templateParser = require('../parsers/template')
@@ -5480,7 +6793,7 @@ FragmentFactory.prototype.create = function (host, scope, parentFrag) {
 
 module.exports = FragmentFactory
 
-},{"../cache":9,"../compiler":12,"../parsers/template":56,"../util":65,"./fragment":44}],44:[function(require,module,exports){
+},{"../cache":10,"../compiler":13,"../parsers/template":57,"../util":66,"./fragment":45}],45:[function(require,module,exports){
 var _ = require('../util')
 var transition = require('../transition')
 
@@ -5657,7 +6970,7 @@ function detach (child) {
 
 module.exports = Fragment
 
-},{"../transition":58,"../util":65}],45:[function(require,module,exports){
+},{"../transition":59,"../util":66}],46:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 var inDoc = _.inDoc
@@ -5824,7 +7137,7 @@ exports._callHook = function (hook) {
 }
 
 }).call(this,require('_process'))
-},{"../util":65,"_process":1}],46:[function(require,module,exports){
+},{"../util":66,"_process":1}],47:[function(require,module,exports){
 var mergeOptions = require('../util').mergeOptions
 
 /**
@@ -5936,7 +7249,7 @@ exports._init = function (options) {
   }
 }
 
-},{"../util":65}],47:[function(require,module,exports){
+},{"../util":66}],48:[function(require,module,exports){
 var _ = require('../util')
 var Directive = require('../directive')
 var compiler = require('../compiler')
@@ -6153,7 +7466,7 @@ exports._cleanup = function () {
   this.$off()
 }
 
-},{"../compiler":12,"../directive":15,"../util":65}],48:[function(require,module,exports){
+},{"../compiler":13,"../directive":16,"../util":66}],49:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 
@@ -6250,7 +7563,7 @@ exports._resolveComponent = function (id, cb) {
 }
 
 }).call(this,require('_process'))
-},{"../util":65,"_process":1}],49:[function(require,module,exports){
+},{"../util":66,"_process":1}],50:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 var compiler = require('../compiler')
@@ -6495,7 +7808,7 @@ exports._initMeta = function () {
 }
 
 }).call(this,require('_process'))
-},{"../compiler":12,"../observer":52,"../observer/dep":51,"../util":65,"../watcher":69,"_process":1}],50:[function(require,module,exports){
+},{"../compiler":13,"../observer":53,"../observer/dep":52,"../util":66,"../watcher":70,"_process":1}],51:[function(require,module,exports){
 var _ = require('../util')
 var arrayProto = Array.prototype
 var arrayMethods = Object.create(arrayProto)
@@ -6593,7 +7906,7 @@ _.define(
 
 module.exports = arrayMethods
 
-},{"../util":65}],51:[function(require,module,exports){
+},{"../util":66}],52:[function(require,module,exports){
 var _ = require('../util')
 var uid = 0
 
@@ -6656,7 +7969,7 @@ Dep.prototype.notify = function () {
 
 module.exports = Dep
 
-},{"../util":65}],52:[function(require,module,exports){
+},{"../util":66}],53:[function(require,module,exports){
 var _ = require('../util')
 var Dep = require('./dep')
 var arrayMethods = require('./array')
@@ -6893,7 +8206,7 @@ _.defineReactive = defineReactive
 
 module.exports = Observer
 
-},{"../util":65,"./array":50,"./dep":51}],53:[function(require,module,exports){
+},{"../util":66,"./array":51,"./dep":52}],54:[function(require,module,exports){
 var _ = require('../util')
 var Cache = require('../cache')
 var cache = new Cache(1000)
@@ -7029,7 +8342,7 @@ exports.parse = function (s) {
   return dir
 }
 
-},{"../cache":9,"../util":65}],54:[function(require,module,exports){
+},{"../cache":10,"../util":66}],55:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 var Path = require('./path')
@@ -7297,7 +8610,7 @@ exports.isSimplePath = function (exp) {
 }
 
 }).call(this,require('_process'))
-},{"../cache":9,"../util":65,"./path":55,"_process":1}],55:[function(require,module,exports){
+},{"../cache":10,"../util":66,"./path":56,"_process":1}],56:[function(require,module,exports){
 (function (process){
 var _ = require('../util')
 var Cache = require('../cache')
@@ -7659,7 +8972,7 @@ exports.set = function (obj, path, val) {
 }
 
 }).call(this,require('_process'))
-},{"../cache":9,"../util":65,"_process":1}],56:[function(require,module,exports){
+},{"../cache":10,"../util":66,"_process":1}],57:[function(require,module,exports){
 var _ = require('../util')
 var Cache = require('../cache')
 var templateCache = new Cache(1000)
@@ -7949,7 +9262,7 @@ exports.parse = function (template, clone, noSelector) {
     : frag
 }
 
-},{"../cache":9,"../util":65}],57:[function(require,module,exports){
+},{"../cache":10,"../util":66}],58:[function(require,module,exports){
 var Cache = require('../cache')
 var config = require('../config')
 var dirParser = require('./directive')
@@ -8111,7 +9424,7 @@ function inlineFilters (exp, single) {
   }
 }
 
-},{"../cache":9,"../config":14,"./directive":53}],58:[function(require,module,exports){
+},{"../cache":10,"../config":15,"./directive":54}],59:[function(require,module,exports){
 var _ = require('../util')
 
 /**
@@ -8192,7 +9505,7 @@ var apply = exports.apply = function (el, direction, op, vm, cb) {
   transition[action](op, cb)
 }
 
-},{"../util":65}],59:[function(require,module,exports){
+},{"../util":66}],60:[function(require,module,exports){
 var _ = require('../util')
 var queue = []
 var queued = false
@@ -8229,7 +9542,7 @@ function flush () {
   return f
 }
 
-},{"../util":65}],60:[function(require,module,exports){
+},{"../util":66}],61:[function(require,module,exports){
 var _ = require('../util')
 var queue = require('./queue')
 var addClass = _.addClass
@@ -8598,7 +9911,7 @@ function isHidden (el) {
 
 module.exports = Transition
 
-},{"../util":65,"./queue":59}],61:[function(require,module,exports){
+},{"../util":66,"./queue":60}],62:[function(require,module,exports){
 (function (process){
 var _ = require('./index')
 
@@ -8752,7 +10065,7 @@ function formatValue (val) {
 }
 
 }).call(this,require('_process'))
-},{"./index":65,"_process":1}],62:[function(require,module,exports){
+},{"./index":66,"_process":1}],63:[function(require,module,exports){
 (function (process){
 /**
  * Enable debug utilities.
@@ -8803,7 +10116,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 }).call(this,require('_process'))
-},{"../config":14,"_process":1}],63:[function(require,module,exports){
+},{"../config":15,"_process":1}],64:[function(require,module,exports){
 (function (process){
 var _ = require('./index')
 var config = require('../config')
@@ -9169,7 +10482,7 @@ exports.removeNodeRange = function (start, end, vm, frag, cb) {
 }
 
 }).call(this,require('_process'))
-},{"../config":14,"../transition":58,"./index":65,"_process":1}],64:[function(require,module,exports){
+},{"../config":15,"../transition":59,"./index":66,"_process":1}],65:[function(require,module,exports){
 // can we use __proto__?
 exports.hasProto = '__proto__' in {}
 
@@ -9256,7 +10569,7 @@ exports.nextTick = (function () {
   }
 })()
 
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 var lang = require('./lang')
 var extend = lang.extend
 
@@ -9267,7 +10580,7 @@ extend(exports, require('./options'))
 extend(exports, require('./component'))
 extend(exports, require('./debug'))
 
-},{"./component":61,"./debug":62,"./dom":63,"./env":64,"./lang":66,"./options":67}],66:[function(require,module,exports){
+},{"./component":62,"./debug":63,"./dom":64,"./env":65,"./lang":67,"./options":68}],67:[function(require,module,exports){
 /**
  * Set a property on an object. Adds the new property and
  * triggers change notification if the property doesn't
@@ -9657,7 +10970,7 @@ exports.looseEqual = function (a, b) {
   /* eslint-enable eqeqeq */
 }
 
-},{}],67:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 (function (process){
 var _ = require('./index')
 var config = require('../config')
@@ -10014,7 +11327,7 @@ exports.resolveAsset = function resolve (options, type, id) {
 }
 
 }).call(this,require('_process'))
-},{"../config":14,"./index":65,"_process":1}],68:[function(require,module,exports){
+},{"../config":15,"./index":66,"_process":1}],69:[function(require,module,exports){
 var _ = require('./util')
 var extend = _.extend
 
@@ -10105,7 +11418,7 @@ extend(p, require('./api/lifecycle'))
 Vue.version = '1.0.0-rc.2'
 module.exports = _.Vue = Vue
 
-},{"./api/data":3,"./api/dom":4,"./api/events":5,"./api/global":6,"./api/lifecycle":7,"./directives/element":16,"./directives/public":31,"./filters":42,"./instance/events":45,"./instance/init":46,"./instance/lifecycle":47,"./instance/misc":48,"./instance/state":49,"./util":65}],69:[function(require,module,exports){
+},{"./api/data":4,"./api/dom":5,"./api/events":6,"./api/global":7,"./api/lifecycle":8,"./directives/element":17,"./directives/public":32,"./filters":43,"./instance/events":46,"./instance/init":47,"./instance/lifecycle":48,"./instance/misc":49,"./instance/state":50,"./util":66}],70:[function(require,module,exports){
 (function (process){
 var _ = require('./util')
 var config = require('./config')
@@ -10453,7 +11766,7 @@ function traverse (obj) {
 module.exports = Watcher
 
 }).call(this,require('_process'))
-},{"./batcher":8,"./config":14,"./observer/dep":51,"./parsers/expression":54,"./util":65,"_process":1}],70:[function(require,module,exports){
+},{"./batcher":9,"./config":15,"./observer/dep":52,"./parsers/expression":55,"./util":66,"_process":1}],71:[function(require,module,exports){
 var inserted = exports.cache = {}
 
 exports.insert = function (css) {
@@ -10473,89 +11786,80 @@ exports.insert = function (css) {
   return elem
 }
 
-},{}],71:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 var __vueify_insert__ = require("vueify/lib/insert-css")
-var __vueify_style__ = __vueify_insert__.insert("\n.profile-picture {\n    border: 3px solid #fff;\n    border-radius: 50%;\n    float: right;\n    width: 80px;\n}\n")
+var __vueify_style__ = __vueify_insert__.insert(".Alert {\n  position: relative;\n  background: #ddd;\n  border: 1px solid #c7c7c7;\n  padding: 1em;\n}\n.Alert--Success {\n  background: #8cff8c;\n  border: 1px solid #00f300;\n}\n.Alert--Error {\n  background: #ffb3b3;\n  border: 1px solid #ff4d4d;\n}\n.Alert__close {\n  position: absolute;\n  top: 1em;\n  right: 1em;\n  font-weight: bold;\n  cursor: pointer;\n}\n")
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = {
+
+  props: ['type'],
+
   data: function data() {
     return {
-      source: 'http://loremflickr.com/80/80'
-    };
-  }
-};
-if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<img class=\"profile-picture\" :src=\"source\">\n"
-if (module.hot) {(function () {  module.hot.accept()
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), true)
-  if (!hotAPI.compatible) return
-  module.hot.dispose(function () {
-    __vueify_insert__.cache["\n.profile-picture {\n    border: 3px solid #fff;\n    border-radius: 50%;\n    float: right;\n    width: 80px;\n}\n"] = false
-    document.head.removeChild(__vueify_style__)
-  })
-  if (!module.hot.data) {
-    hotAPI.createRecord("_v-e20e4788", module.exports)
-  } else {
-    hotAPI.update("_v-e20e4788", module.exports, (typeof module.exports === "function" ? module.exports.options : module.exports).template)
-  }
-})()}
-},{"vue":68,"vue-hot-reload-api":2,"vueify/lib/insert-css":70}],72:[function(require,module,exports){
-var __vueify_insert__ = require("vueify/lib/insert-css")
-var __vueify_style__ = __vueify_insert__.insert("\n.profile {\n    background: #eee;\n    border: 1px solid #aaa;\n    border-radius: 2em;\n    margin: 2em auto;\n    min-height: 150px;\n    padding: 2em;\n    width: 300px;\n}\n")
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _Picture = require('./Picture.vue');
-
-var _Picture2 = _interopRequireDefault(_Picture);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-exports.default = {
-  data: function data() {
-    return {
-      name: 'Xiajun Yan'
+      show: true
     };
   },
 
-  components: { Picture: _Picture2.default }
+
+  computed: {
+    alertClasses: function alertClasses() {
+      var type = this.type;
+
+      return {
+        'Alert': true,
+        'Alert--Success': type == 'success',
+        'Alert--Error': type == 'error'
+      };
+    }
+  }
+
 };
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div class=\"profile\">\n  {{ name }}\n</div>\n<picture></picture>\n"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div :class=\"alertClasses\" v-show=\"show\">\n      <slot></slot>\n      <span class=\"Alert__close\" @click=\"show = false\">x</span>\n    </div> \n"
 if (module.hot) {(function () {  module.hot.accept()
   var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
   if (!hotAPI.compatible) return
   module.hot.dispose(function () {
-    __vueify_insert__.cache["\n.profile {\n    background: #eee;\n    border: 1px solid #aaa;\n    border-radius: 2em;\n    margin: 2em auto;\n    min-height: 150px;\n    padding: 2em;\n    width: 300px;\n}\n"] = false
+    __vueify_insert__.cache[".Alert {\n  position: relative;\n  background: #ddd;\n  border: 1px solid #c7c7c7;\n  padding: 1em;\n}\n.Alert--Success {\n  background: #8cff8c;\n  border: 1px solid #00f300;\n}\n.Alert--Error {\n  background: #ffb3b3;\n  border: 1px solid #ff4d4d;\n}\n.Alert__close {\n  position: absolute;\n  top: 1em;\n  right: 1em;\n  font-weight: bold;\n  cursor: pointer;\n}\n"] = false
     document.head.removeChild(__vueify_style__)
   })
   if (!module.hot.data) {
-    hotAPI.createRecord("_v-352a8932", module.exports)
+    hotAPI.createRecord("_v-5641c0f0", module.exports)
   } else {
-    hotAPI.update("_v-352a8932", module.exports, (typeof module.exports === "function" ? module.exports.options : module.exports).template)
+    hotAPI.update("_v-5641c0f0", module.exports, (typeof module.exports === "function" ? module.exports.options : module.exports).template)
   }
 })()}
-},{"./Picture.vue":71,"vue":68,"vue-hot-reload-api":2,"vueify/lib/insert-css":70}],73:[function(require,module,exports){
+},{"vue":69,"vue-hot-reload-api":2,"vueify/lib/insert-css":71}],73:[function(require,module,exports){
 'use strict';
 
 var _vue = require('vue');
 
 var _vue2 = _interopRequireDefault(_vue);
 
-var _Profile = require('./Profile.vue');
+var _vueResource = require('vue-resource');
 
-var _Profile2 = _interopRequireDefault(_Profile);
+var _vueResource2 = _interopRequireDefault(_vueResource);
+
+var _Alert = require('./components/Alert.vue');
+
+var _Alert2 = _interopRequireDefault(_Alert);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// window.Vue = Vue;
+_vue2.default.use(_vueResource2.default);
+
+// var Vue = require('vue');
+// var VueResource = require('vue-resource');
+// // window.Vue = Vue;
+// Vue.use(VueResource);
+
+// import Profile from './Profile.vue';
 
 // new Vue({
 //   el: '#app',
@@ -10576,7 +11880,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //     ]
 //   }
 // });
-//
+
 // new Vue({
 //   el: '#app',
 //   data: {
@@ -10588,94 +11892,409 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //     }
 //   }
 // });
-//
-//
-new _vue2.default({
-    el: '#app2',
-    data: {
-        message: 'Hello'
-    }
-});
-// Vue.component('counter',{
-//   template:'#counter-template',
-//   props:['subject'],
-//   data:function() {
-//     return {
-//       count:0
-//     };
-//   }
+
+// new Vue({
+//     el: '#app2',
+//     data: {
+//         message: 'Hello'
+//     }
 // });
-new _vue2.default({
-    el: '#app3',
-    data: {
-        points: 50,
-        first: 'Xiajun',
-        last: 'Yan',
-        fullname: 'Xiajun Yan'
+// // Vue.component('counter',{
+// //   template:'#counter-template',
+// //   props:['subject'],
+// //   data:function() {
+// //     return {
+// //       count:0
+// //     };
+// //   }
+// // });
+// new Vue({
+//     el: '#app3',
+//     data: {
+//         points: 50,
+//         first: 'Xiajun',
+//         last: 'Yan',
+//         fullname: 'Xiajun Yan',
+//     },
+//     computed: {
+//         skill: function() {
+//             if (this.points <= 50) {
+//                 return 'B';
+//             }
+//             return 'A';
+//         },
+//         fullname: function() {
+//             return this.first + ' ' + this.last;
+//         },
+//     },
+//     // watch:{
+//     //   first:function(first){
+//     //     this.fullname = first + ' ' + this.last;
+//     //   },
+//     //   last:function(last){
+//     //     this.fullname =   this.first + ' ' + last;
+//     //   },
+//     // },
+//     methods: {
+//         handleIt: function() {
+//             alert('Handled');
+//         },
+//         minusCount: function() {
+//             this.count -= 1;
+//         }
+//     },
+//     components: {
+//         counter: {
+//             template: '#counter-template',
+//             props: ['subject'],
+//             data: function() {
+//                 return {
+//                     count: 0
+//                 };
+//             }
+//         }
+//     }
+// });
+// new Vue({
+//     el: '#app',
+//     data: {
+//         newTodo: '',
+//         todos: [{
+//             text: 'Add some todos'
+//         }]
+//     },
+//     methods: {
+//         addTodo: function() {
+//             var text = this.newTodo.trim()
+//             if (text) {
+//                 this.todos.push({
+//                     text: text
+//                 })
+//                 this.newTodo = ''
+//             }
+//         },
+//         removeTodo: function(index) {
+//             this.todos.splice(index, 1)
+//         }
+//     }
+// });
+
+// new Vue({
+//     el:'#app4',
+//     data: {
+//         // store a list of plans
+//         plans:[
+//             { name:'Enterprise', price:100 },
+//             { name:'Pro', price:50 },
+//             { name:'Personal', price:10 },
+//             { name:'Free', price:0 },
+//         ],
+//         active: {}
+//     },
+//     components: {
+//         plan: {
+//             // template: '#plan-template',
+
+//             props:['plan','active'],
+
+//             computed: {
+//                 isUpgrade : function() {
+//                     return this.plan.price > this.active.price;
+//                     //this.plan.price
+//                     //this.active.price
+//                 }
+//             },
+
+//             methods: {
+//                 setActivePlan: function(){
+//                     this.active = this.plan;
+//                 }
+//             }
+//         }
+//     }
+// });
+
+// new Vue({
+//     el:"#app5",
+//     data: {
+//         tasks: [
+//            { body: 'Go to the store', completed:false,price:100},
+//            { body: 'Go to the bank', completed:false,price:100 },
+//            { body: 'Go to the doctor', completed:true,price:100 }
+//         ]
+//     },
+//     components: {
+//         taskcomp: {
+//             template:'#tasks-template',
+//             props:['list'],
+//             computed: {
+//                 remaining: function() {
+//                       // completedTasks =
+//                       // inProgress = !
+//                     var vm = this;
+//                     //  return this.list.filter(function(task){
+//                     //     return !vm.isCompleted(task);
+//                     // }).length;
+//                     return this.list.filter(this.isInProgress).length;
+//                 }
+//             },
+//             methods: {
+//                 setPrice: function(task) {
+//                     task.price = 50;
+//                 },
+//                 isCompleted:function(task) {
+//                     return task.completed;
+//                 },
+//                 isInProgress:function(task) {
+//                     return !this.isCompleted(task);
+//                 },
+
+//                 deleteTask: function(task) {
+//                     this.list.$remove(task);
+//                 },
+
+//                 clearCompleted: function(){
+//                     this.list = this.list.filter(this.isInProgress);
+//                 }
+//             }
+//         }   
+//     }
+// });
+
+_vue2.default.component('tasks', {
+    template: '#tasks-template',
+
+    data: function data() {
+        return {
+            list: []
+        };
     },
-    computed: {
-        skill: function skill() {
-            if (this.points <= 50) {
-                return 'B';
-            }
-            return 'A';
-        },
-        fullname: function fullname() {
-            return this.first + ' ' + this.last;
-        }
+
+    created: function created() {
+
+        this.fetchTaskList();
+        // var vm = this;
+
+        // $.getJSON('api/tasks', function(tasks){
+        //     console.log(tasks);
+        //     // console.log(data);
+        //     //assign these data to a list
+        //     vm.list = tasks;
+        // }.bind(this));
     },
-    // watch:{
-    //   first:function(first){
-    //     this.fullname = first + ' ' + this.last;
-    //   },
-    //   last:function(last){
-    //     this.fullname =   this.first + ' ' + last;
-    //   },
+
+    //with api/tasks, no longer pass props through from our sever side.
+    // props:['list'],
+
+    //when this components is initially created, I want to go ahead and make a AJAX request.
+    // created() is shorthand
+
+    // created() {
+
+    //     // this.list = JSON.parse(this.list);
+
     // },
+    //
     methods: {
-        handleIt: function handleIt() {
-            alert('Handled');
+        fetchTaskList: function fetchTaskList() {
+            var _this = this;
+
+            var resource = this.$resource('api/tasks{/id}');
+            resource.get({}).then(function (response) {
+                _this.list = response.data;
+            });
+            // resource.update({id:5},{body:'Update task body'}).then((response) =>{
+            //     this.list = response.data;
+            // });
         },
-        minusCount: function minusCount() {
-            this.count -= 1;
-        }
-    },
-    components: {
-        counter: {
-            template: '#counter-template',
-            props: ['subject'],
-            data: function data() {
-                return {
-                    count: 0
-                };
-            }
-        }
-    }
-});
-new _vue2.default({
-    el: '#app',
-    data: {
-        newTodo: '',
-        todos: [{
-            text: 'Add some todos'
-        }]
-    },
-    methods: {
-        addTodo: function addTodo() {
-            var text = this.newTodo.trim();
-            if (text) {
-                this.todos.push({
-                    text: text
-                });
-                this.newTodo = '';
-            }
+
+        //       this.$http.get('api/tasks').then((response) => {
+        //           console.log(response.);
+        //       }, (response) => {
+        //           // error callback
+        //       });
+        // }
+
+        // $.getJSON('api/tasks', function(tasks){
+        //     this.list = tasks;
+        // }.bind(this));   
+
+        deleteTask: function deleteTask(task) {
+            this.list.$remove(task);
         },
-        removeTodo: function removeTodo(index) {
-            this.todos.splice(index, 1);
+
+        getTaskID: function getTaskID(task) {
+            console.log(task.id);
         }
     }
 });
 
-},{"./Profile.vue":72,"vue":68}]},{},[73]);
+new _vue2.default({
+    el: '#app6'
+});
+
+_vue2.default.filter('jsonIt', function (value) {
+    return JSON.stringify(value);
+});
+
+_vue2.default.filter('role', function (value, role) {
+    return value.filter(function (item) {
+        return item.role == role;
+    });
+}); // people | role 'admin'
+
+_vue2.default.component('message', {
+    template: '#message-template',
+
+    data: function data() {
+        return { message: '' };
+    },
+
+    methods: {
+
+        storeMessage: function storeMessage() {
+            // console.log('Storing ' + this.message);
+
+            // $dispatch, parent can listen for that event, which is handled
+            this.$dispatch('new-message', this.message);
+            // $broadcast
+
+            this.message = '';
+        }
+    }
+});
+new _vue2.default({
+
+    el: '#app',
+
+    data: {
+        people: [{ name: 'Joe', role: 'admin' }, { name: 'Susan', role: 'admin' }, { name: 'Frank', role: 'student' }, { name: 'Jeffrey', role: 'admin' }],
+        messages: []
+    },
+
+    methods: {
+
+        handleNewMessage: function handleNewMessage(message) {
+            this.messages.push(message);
+            // console.log('Parent is handling ' + message);
+        }
+    },
+
+    // events: {
+    //     "new-message": function(message) {
+    //         console.log('Parent is handling ' + message);
+    //     }
+
+    // },
+
+    components: { Alert: _Alert2.default },
+
+    ready: function ready() {
+
+        // alert('Ready to go!');
+    }
+});
+
+//Lesson
+// Vue.directive('ajax',{
+//     //The way of this work is:
+//     //when you attach this ('ajax') directive to html tag,
+//     //vue will instantly call this bind() method
+//     bind: function() {
+
+//     },
+//     //Next, as soon as that finishs, the update() method will
+//     //instantly be called, and theway they work is : this will
+//     //repeatly be called, whenever the bind value(value) changes
+//     update: function(value) {
+
+//     },
+//     //And finally, as you might expect, when the directive is unbind,
+//     //will trigger this method, where you can remove any of their listeners or same stuffs like that
+//     unbind: function() {
+
+//     }
+// });
+// // keep it simple
+// Vue.directive('ajax',function(value){});
+
+// Vue.http.headers.common['X-CSRF-TOKEN'] = document.querySelector('input[name="_token"]').value;
+
+_vue2.default.directive('ajax', {
+    params: ['complete'],
+
+    bind: function bind() {
+        // console.log(this.params);
+        //First thing we need to do, directive object, which we can fetch.
+        //In our situation, we need to add a event listener to the form element
+        //if you using jQuery, you could say: $(this.el).on('---')
+
+        //Let's listen for when the form is submitted, and then will trigger a method called "onSubmit"
+        this.el.addEventListener('submit', this.onSubmit.bind(this));
+    },
+
+    update: function update(value) {
+        // alert('update');
+    },
+
+    //when we trigger this,
+    onSubmit: function onSubmit(e) {
+        //"this"-->will no longer refer to which is bund in the bind() method (this.el.---),
+        //"this" now refer to the form that will be submitted
+        //so if we wanna say: no, within the context of this method, we still wanna this to refer
+        //to it did before, JavaScript did it in a very weird stuffs: just make sure we bind the obeject:
+        //.bind(this) in the above method
+        //
+        //We prevent the default action, so we do not submit the form, and instead we use
+        //view resource to submit (this.vm in the following)
+        e.preventDefault();
+        // Vue.http.post
+        //
+        // this.vm refers to the viewmodel (new Vue({el:"#app7"}))
+        // Quick note on using the array syntax here:
+        // a lot people don't know this with javaScript, in this example, we could say:
+        // vm.$http.post or your can format it with vm.$http['post']
+        // this options is very good when you referencing a variable like [requestType],
+        // because obviously when you use the dot-synatax: vm.$http.requestType that's will not going to work
+
+        //this.el.action = 'tasks/1'
+        this.vm.$http[this.getRequestType()](this.el.action).then(this.onComplete.bind(this))
+        //change response in app/Exceptions/Handler.php
+        //.success or .fail in jQuery
+        .catch(this.onError.bind(this));
+    },
+
+    onComplete: function onComplete() {
+
+        if (this.params.complete) {
+            alert(this.params.complete);
+        }
+    },
+
+    onError: function onError(response) {
+        alert(response.data.message); //flash message in real life
+    },
+
+    //We need to figure out what the RequestType should be for this form.
+    getRequestType: function getRequestType() {
+        //see the console, and find out the name of the hidden input of DELETE
+        var method = this.el.querySelector('input[name="_method"]');
+
+        //if not, we just grab the method attribute of the form
+        //that will be a 'DELETE'->'delete' or 'POST'->'post'
+        return (method ? method.value : this.el.method).toLowerCase();
+    }
+});
+new _vue2.default({
+    el: '#app7',
+
+    http: {
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+        }
+    }
+});
+
+},{"./components/Alert.vue":72,"vue":69,"vue-resource":3}]},{},[73]);
 
 //# sourceMappingURL=app.js.map

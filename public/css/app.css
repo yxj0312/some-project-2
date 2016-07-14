@@ -5757,4 +5757,7 @@ body {
   background-color: green;
   color: white; }
 
+.completed {
+  text-decoration: line-through; }
+
 /*# sourceMappingURL=app.css.map */
