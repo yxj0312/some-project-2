@@ -44,17 +44,3 @@ Route::get('/tasks',function(){
 Route::delete('/tasks/{task}',function(App\Task $task){
 	$task->delete();
 });
-
-
-Route::get('/alerts/begin',function() {
-	session()->flash('Status','You are now signed in');
-
-
-	return redirect('/alerts');
-});
-
-Route::get('/alerts',function(){
-
-	return view('alerts.welcome');
-});
-

@@ -1,75 +1,62 @@
+
+
 <template>
-      <div  transition="fade" >
-      <div  class="Alert Alert--{{ type | capitalize }}" v-show="show">
+  <div :class="alertClasses" v-show="show">
         <slot></slot>
-        <span class="Alert__close" v-show="important" @click="show = false"> 
-          &times       
-        </span>
-      </div>
-        
-      </div>
+        <span class="Alert__close" @click="show = false">x</span>
+      </div> 
 </template>
 
 <script>
 export default  {
-  props: {
-    type:{ default: 'info' },
-    timeout: { default: 3000 },
-    important: {
-      type:Boolean,
-      default:false
+  
+  
+  props:['type'],
+  
+  data(){
+    return {
+      show:true
+    };
+  },
+  
+  computed:{
+    alertClasses(){
+      var type= this.type;
+
+      
+      return {
+        'Alert': true,
+        'Alert--Success':type == 'success',
+        'Alert--Error':type == 'error'
+      };
     }
-  },
-
-    data() {
-    //Set the initial state to true
-    return { show: true };
-  },
-
-  //We can also do it with vue transition!
-  ready() {
-    if(!this.important) {
-       setTimeout(
-       () => this.show = false,
-
-       this.timeout
-      )
   }
 
-    }
-   
-
-}
+};
 
 </script>
 
-<style>
-  .Alert {
-    padding:10px;
-    position: relative;
-  }
-  .Alert--Info {
-      background: #e3e3e3;
-  }
-  .Alert--Success {
-    background:green;
-    color:white;
-  }
+<style lang="stylus">
+  
+  .Alert
+    position:relative
+    background:#ddd
+    border:1px solid darken(#ddd,10%)
+    padding:1em
 
-  .Alert__close{
-    position:absolute;
-    top:10px;
-    right:10px;
-    cursor:pointer;
-  }
+  .Alert--Success
+    background:lighten(green,70%)
+    border:1px solid lighten(green,30%)
 
-  .fade-transition {
-    transition:opacity .4s ease;
-  }
+  .Alert--Error
+    background:lighten(red,70%)
+    border:1px solid lighten(red,30%)
 
-  .fade-leave {
-    opacity:0;
-  }
+  .Alert__close
+    position:absolute
+    top:1em
+    right:1em
+    font-weight:bold
+    cursor:pointer
+    
 </style>
-
-

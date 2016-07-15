@@ -11788,47 +11788,44 @@ exports.insert = function (css) {
 
 },{}],72:[function(require,module,exports){
 var __vueify_insert__ = require("vueify/lib/insert-css")
-var __vueify_style__ = __vueify_insert__.insert("\n.Alert {\n  padding:10px;\n  position: relative;\n}\n.Alert--Info {\n    background: #e3e3e3;\n}\n.Alert--Success {\n  background:green;\n  color:white;\n}\n\n.Alert__close{\n  position:absolute;\n  top:10px;\n  right:10px;\n  cursor:pointer;\n}\n\n.fade-transition {\n  -webkit-transition:opacity .4s ease;\n  transition:opacity .4s ease;\n}\n\n.fade-leave {\n  opacity:0;\n}\n")
+var __vueify_style__ = __vueify_insert__.insert(".Alert {\n  position: relative;\n  background: #ddd;\n  border: 1px solid #c7c7c7;\n  padding: 1em;\n}\n.Alert--Success {\n  background: #8cff8c;\n  border: 1px solid #00f300;\n}\n.Alert--Error {\n  background: #ffb3b3;\n  border: 1px solid #ff4d4d;\n}\n.Alert__close {\n  position: absolute;\n  top: 1em;\n  right: 1em;\n  font-weight: bold;\n  cursor: pointer;\n}\n")
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = {
-  props: {
-    type: { default: 'info' },
-    timeout: { default: 3000 },
-    important: {
-      type: Boolean,
-      default: false
-    }
-  },
+
+  props: ['type'],
 
   data: function data() {
-    //Set the initial state to true
-    return { show: true };
+    return {
+      show: true
+    };
   },
 
 
-  //We can also do it with vue transition!
-  ready: function ready() {
-    var _this = this;
+  computed: {
+    alertClasses: function alertClasses() {
+      var type = this.type;
 
-    if (!this.important) {
-      setTimeout(function () {
-        return _this.show = false;
-      }, this.timeout);
+      return {
+        'Alert': true,
+        'Alert--Success': type == 'success',
+        'Alert--Error': type == 'error'
+      };
     }
   }
+
 };
 if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div transition=\"fade\">\n<div class=\"Alert Alert--{{ type | capitalize }}\" v-show=\"show\">\n  <slot></slot>\n  <span class=\"Alert__close\" v-show=\"important\" @click=\"show = false\"> \n    ×       \n  </span>\n</div>\n  \n</div>\n"
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div :class=\"alertClasses\" v-show=\"show\">\n      <slot></slot>\n      <span class=\"Alert__close\" @click=\"show = false\">x</span>\n    </div> \n"
 if (module.hot) {(function () {  module.hot.accept()
   var hotAPI = require("vue-hot-reload-api")
   hotAPI.install(require("vue"), true)
   if (!hotAPI.compatible) return
   module.hot.dispose(function () {
-    __vueify_insert__.cache["\n.Alert {\n  padding:10px;\n  position: relative;\n}\n.Alert--Info {\n    background: #e3e3e3;\n}\n.Alert--Success {\n  background:green;\n  color:white;\n}\n\n.Alert__close{\n  position:absolute;\n  top:10px;\n  right:10px;\n  cursor:pointer;\n}\n\n.fade-transition {\n  -webkit-transition:opacity .4s ease;\n  transition:opacity .4s ease;\n}\n\n.fade-leave {\n  opacity:0;\n}\n"] = false
+    __vueify_insert__.cache[".Alert {\n  position: relative;\n  background: #ddd;\n  border: 1px solid #c7c7c7;\n  padding: 1em;\n}\n.Alert--Success {\n  background: #8cff8c;\n  border: 1px solid #00f300;\n}\n.Alert--Error {\n  background: #ffb3b3;\n  border: 1px solid #ff4d4d;\n}\n.Alert__close {\n  position: absolute;\n  top: 1em;\n  right: 1em;\n  font-weight: bold;\n  cursor: pointer;\n}\n"] = false
     document.head.removeChild(__vueify_style__)
   })
   if (!module.hot.data) {
