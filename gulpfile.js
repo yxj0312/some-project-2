@@ -12,5 +12,6 @@ elixir(function(mix) {
     	.styles([
     		'./node_modules/sweetalert/dist/sweetalert.css'
     		],'./public/css/libs.css')
-    	.browserify('app.js');
+    	.browserify('app.js')
+    	.browserify('main.js');
 });
