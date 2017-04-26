@@ -48,173 +48,173 @@ import Alert from './components/Alert.vue';
 // });
 
 
-// new Vue({
-//     el: '#app2',
-//     data: {
-//         message: 'Hello'
-//     }
-// });
-// // Vue.component('counter',{
-// //   template:'#counter-template',
-// //   props:['subject'],
-// //   data:function() {
-// //     return {
-// //       count:0
-// //     };
-// //   }
-// // });
-// new Vue({
-//     el: '#app3',
-//     data: {
-//         points: 50,
-//         first: 'Xiajun',
-//         last: 'Yan',
-//         fullname: 'Xiajun Yan',
-//     },
-//     computed: {
-//         skill: function() {
-//             if (this.points <= 50) {
-//                 return 'B';
-//             }
-//             return 'A';
-//         },
-//         fullname: function() {
-//             return this.first + ' ' + this.last;
-//         },
-//     },
-//     // watch:{
-//     //   first:function(first){
-//     //     this.fullname = first + ' ' + this.last;
-//     //   },
-//     //   last:function(last){
-//     //     this.fullname =   this.first + ' ' + last;
-//     //   },
-//     // },
-//     methods: {
-//         handleIt: function() {
-//             alert('Handled');
-//         },
-//         minusCount: function() {
-//             this.count -= 1;
-//         }
-//     },
-//     components: {
-//         counter: {
-//             template: '#counter-template',
-//             props: ['subject'],
-//             data: function() {
-//                 return {
-//                     count: 0
-//                 };
-//             }
-//         }
-//     }
-// });
-// new Vue({
-//     el: '#app',
-//     data: {
-//         newTodo: '',
-//         todos: [{
-//             text: 'Add some todos'
-//         }]
-//     },
-//     methods: {
-//         addTodo: function() {
-//             var text = this.newTodo.trim()
-//             if (text) {
-//                 this.todos.push({
-//                     text: text
-//                 })
-//                 this.newTodo = ''
-//             }
-//         },
-//         removeTodo: function(index) {
-//             this.todos.splice(index, 1)
-//         }
-//     }
-// });
+new Vue({
+    el: '#app2',
+    data: {
+        message: 'Hello'
+    }
+});
+Vue.component('counter',{
+  template:'#counter-template',
+  props:['subject'],
+  data:function() {
+    return {
+      count:0
+    };
+  }
+});
+new Vue({
+    el: '#app3',
+    data: {
+        points: 50,
+        first: 'Xiajun',
+        last: 'Yan',
+        fullname: 'Xiajun Yan',
+    },
+    computed: {
+        skill: function() {
+            if (this.points <= 50) {
+                return 'B';
+            }
+            return 'A';
+        },
+        fullname: function() {
+            return this.first + ' ' + this.last;
+        },
+    },
+    watch:{
+      first:function(first){
+        this.fullname = first + ' ' + this.last;
+      },
+      last:function(last){
+        this.fullname =   this.first + ' ' + last;
+      },
+    },
+    methods: {
+        handleIt: function() {
+            alert('Handled');
+        },
+        minusCount: function() {
+            this.count -= 1;
+        }
+    },
+    components: {
+        counter: {
+            template: '#counter-template',
+            props: ['subject'],
+            data: function() {
+                return {
+                    count: 0
+                };
+            }
+        }
+    }
+});
+new Vue({
+    el: '#app',
+    data: {
+        newTodo: '',
+        todos: [{
+            text: 'Add some todos'
+        }]
+    },
+    methods: {
+        addTodo: function() {
+            var text = this.newTodo.trim()
+            if (text) {
+                this.todos.push({
+                    text: text
+                })
+                this.newTodo = ''
+            }
+        },
+        removeTodo: function(index) {
+            this.todos.splice(index, 1)
+        }
+    }
+});
 
-// new Vue({
-//     el:'#app4',
-//     data: {
-//         // store a list of plans
-//         plans:[
-//             { name:'Enterprise', price:100 },
-//             { name:'Pro', price:50 },
-//             { name:'Personal', price:10 },
-//             { name:'Free', price:0 },
-//         ],
-//         active: {}
-//     },
-//     components: {
-//         plan: {
-//             // template: '#plan-template',
+new Vue({
+    el:'#app4',
+    data: {
+        // store a list of plans
+        plans:[
+            { name:'Enterprise', price:100 },
+            { name:'Pro', price:50 },
+            { name:'Personal', price:10 },
+            { name:'Free', price:0 },
+        ],
+        active: {}
+    },
+    components: {
+        plan: {
+            // template: '#plan-template',
 
-//             props:['plan','active'],
+            props:['plan','active'],
 
-//             computed: {
-//                 isUpgrade : function() {
-//                     return this.plan.price > this.active.price;
-//                     //this.plan.price
-//                     //this.active.price
-//                 }
-//             },
+            computed: {
+                isUpgrade : function() {
+                    return this.plan.price > this.active.price;
+                    //this.plan.price
+                    //this.active.price
+                }
+            },
 
-//             methods: {
-//                 setActivePlan: function(){
-//                     this.active = this.plan;
-//                 }
-//             }
-//         }
-//     }
-// });
+            methods: {
+                setActivePlan: function(){
+                    this.active = this.plan;
+                }
+            }
+        }
+    }
+});
 
-// new Vue({
-//     el:"#app5",
-//     data: {
-//         tasks: [
-//            { body: 'Go to the store', completed:false,price:100},
-//            { body: 'Go to the bank', completed:false,price:100 },
-//            { body: 'Go to the doctor', completed:true,price:100 }
-//         ]
-//     },
-//     components: {
-//         taskcomp: {
-//             template:'#tasks-template',
-//             props:['list'],
-//             computed: {
-//                 remaining: function() {
-//                       // completedTasks = 
-//                       // inProgress = !
-//                     var vm = this;
-//                     //  return this.list.filter(function(task){
-//                     //     return !vm.isCompleted(task);
-//                     // }).length;
-//                     return this.list.filter(this.isInProgress).length;
-//                 }
-//             },
-//             methods: {
-//                 setPrice: function(task) {
-//                     task.price = 50;
-//                 },
-//                 isCompleted:function(task) {
-//                     return task.completed;
-//                 },
-//                 isInProgress:function(task) {
-//                     return !this.isCompleted(task);
-//                 },
+new Vue({
+    el:"#app5",
+    data: {
+        tasks: [
+           { body: 'Go to the store', completed:false,price:100},
+           { body: 'Go to the bank', completed:false,price:100 },
+           { body: 'Go to the doctor', completed:true,price:100 }
+        ]
+    },
+    components: {
+        taskcomp: {
+            template:'#tasks-template',
+            props:['list'],
+            computed: {
+                remaining: function() {
+                      // completedTasks = 
+                      // inProgress = !
+                    var vm = this;
+                    //  return this.list.filter(function(task){
+                    //     return !vm.isCompleted(task);
+                    // }).length;
+                    return this.list.filter(this.isInProgress).length;
+                }
+            },
+            methods: {
+                setPrice: function(task) {
+                    task.price = 50;
+                },
+                isCompleted:function(task) {
+                    return task.completed;
+                },
+                isInProgress:function(task) {
+                    return !this.isCompleted(task);
+                },
 
-//                 deleteTask: function(task) {
-//                     this.list.$remove(task);
-//                 },
+                deleteTask: function(task) {
+                    this.list.$remove(task);
+                },
 
-//                 clearCompleted: function(){
-//                     this.list = this.list.filter(this.isInProgress);
-//                 }
-//             }
-//         }    
-//     }
-// });
+                clearCompleted: function(){
+                    this.list = this.list.filter(this.isInProgress);
+                }
+            }
+        }    
+    }
+});
 
 Vue.component('tasks',{
     template: '#tasks-template',
@@ -320,43 +320,43 @@ Vue.component('message',{
         }
     }
 });
-new Vue({
+// new Vue({
 
-    el:'#app',
+//     el:'#app',
 
-    data: {
-        people: [
-            {name:'Joe',role:'admin'},
-            {name:'Susan',role:'admin'},
-            {name:'Frank',role:'student'},
-            {name:'Jeffrey',role:'admin'},
+//     data: {
+//         people: [
+//             {name:'Joe',role:'admin'},
+//             {name:'Susan',role:'admin'},
+//             {name:'Frank',role:'student'},
+//             {name:'Jeffrey',role:'admin'},
 
-        ],
-        messages: []
-    },
+//         ],
+//         messages: []
+//     },
 
-    methods:{
+//     methods:{
 
-        handleNewMessage: function(message)  {
-            this.messages.push(message);
-            // console.log('Parent is handling ' + message);
-        }
-    },
+//         handleNewMessage: function(message)  {
+//             this.messages.push(message);
+//             // console.log('Parent is handling ' + message);
+//         }
+//     },
 
-    // events: {
-    //     "new-message": function(message) {
-    //         console.log('Parent is handling ' + message);
-    //     }
+//     // events: {
+//     //     "new-message": function(message) {
+//     //         console.log('Parent is handling ' + message);
+//     //     }
 
-    // },
+//     // },
 
-    components: { Alert },
+//     components: { Alert },
 
-    ready() {
+//     ready() {
 
-        // alert('Ready to go!');
-    }
-})
+//         // alert('Ready to go!');
+//     }
+// })
 
 //Lesson
 // Vue.directive('ajax',{
@@ -367,7 +367,7 @@ new Vue({
 
 //     },
 //     //Next, as soon as that finishs, the update() method will
-//     //instantly be called, and theway they work is : this will 
+//     //instantly be called, and the way they work is : this will 
 //     //repeatly be called, whenever the bind value(value) changes
 //     update: function(value) {
 
@@ -460,3 +460,60 @@ new Vue({
         }
     }
 });
+
+
+var min = Vue.extend({
+    template: '#clock-min'
+});
+var hour = Vue.extend({
+    template: '#clock-hour'
+});
+var sec = Vue.extend({
+    template: '#clock-sec'
+});
+
+var time = Vue.extend({
+    template: '#clock-time',
+    props: ['myMessage']
+});
+
+Vue.component('clock', {
+    template: '#clock-template',
+    components: {
+        'min-component': min,
+        'hour-component': hour,
+        'sec-component': sec,
+        'time-component': time
+    },
+    data () {
+        return { time: "00:00:00" }
+    },
+    ready () {
+        this.startTime()
+    },
+    methods: {
+        startTime: function () {
+            var min = this.$refs.min.$el,
+                sec = this.$refs.sec.$el,
+                hour = this.$refs.hour.$el;
+            var now = new Date(),
+                hValue = now.getHours(),
+                mValue = now.getMinutes(),
+                sValue = now.getSeconds();
+                setTimeout(this.startTime, 1000);
+
+                // 数字时间
+                mValue = this.checkTime(mValue);
+                sValue = this.checkTime(sValue);
+                this.time = hValue + ":" + mValue + ":" + sValue;
+        },
+        checkTime: function (i) {
+            if (i < 10) {i = "0" + i};
+            return i;
+        }
+    }
+});
+
+var parent = new Vue({
+    el: '#clock'
+})

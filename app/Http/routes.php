@@ -34,13 +34,20 @@ Route::get('api/tasks',function(){
 	 return App\Task::latest()->get();
 });
 Route::get('/tasks',function(){
-	// $tasks = App\Task::latest()->get();
+	//return Task::all() is really bad practice
+	//because:1. All is bad -- We are doing Tasks all here, so we are returning every single task.
+	//2. No way to attach meta data -- In this way, we have no easy way to attach meta informations, which might be helpful to the client
+	//3. Lining db structure to the API output
+	//4. No way to signal headers/response codes
 
-	// return view('tasks.home',compact('tasks'));
-		return view('tasks.home');
+	// $tasks = App\Task::latest()->get();
+	// return view('tasks.home',compact('tasks')); 
+	 return view('tasks.home');
 });
 // Route::resource('lessons','LessonsController');
 // 
 Route::delete('/tasks/{task}',function(App\Task $task){
 	$task->delete();
 });
+
+Route::resource('flexbox', 'FlexboxController');

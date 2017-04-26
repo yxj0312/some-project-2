@@ -21,8 +21,8 @@
         </h3>
         <input v-model="message">
             <pre>
-     @{{ $data | json}}
-   </pre>
+                @{{ $data | json}}
+            </pre>
         </input>
     </div>
 </div>

@@ -11787,54 +11787,6 @@ exports.insert = function (css) {
 }
 
 },{}],72:[function(require,module,exports){
-var __vueify_insert__ = require("vueify/lib/insert-css")
-var __vueify_style__ = __vueify_insert__.insert(".Alert {\n  position: relative;\n  background: #ddd;\n  border: 1px solid #c7c7c7;\n  padding: 1em;\n}\n.Alert--Success {\n  background: #8cff8c;\n  border: 1px solid #00f300;\n}\n.Alert--Error {\n  background: #ffb3b3;\n  border: 1px solid #ff4d4d;\n}\n.Alert__close {\n  position: absolute;\n  top: 1em;\n  right: 1em;\n  font-weight: bold;\n  cursor: pointer;\n}\n")
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = {
-
-  props: ['type'],
-
-  data: function data() {
-    return {
-      show: true
-    };
-  },
-
-
-  computed: {
-    alertClasses: function alertClasses() {
-      var type = this.type;
-
-      return {
-        'Alert': true,
-        'Alert--Success': type == 'success',
-        'Alert--Error': type == 'error'
-      };
-    }
-  }
-
-};
-if (module.exports.__esModule) module.exports = module.exports.default
-;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div :class=\"alertClasses\" v-show=\"show\">\n      <slot></slot>\n      <span class=\"Alert__close\" @click=\"show = false\">x</span>\n    </div> \n"
-if (module.hot) {(function () {  module.hot.accept()
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), true)
-  if (!hotAPI.compatible) return
-  module.hot.dispose(function () {
-    __vueify_insert__.cache[".Alert {\n  position: relative;\n  background: #ddd;\n  border: 1px solid #c7c7c7;\n  padding: 1em;\n}\n.Alert--Success {\n  background: #8cff8c;\n  border: 1px solid #00f300;\n}\n.Alert--Error {\n  background: #ffb3b3;\n  border: 1px solid #ff4d4d;\n}\n.Alert__close {\n  position: absolute;\n  top: 1em;\n  right: 1em;\n  font-weight: bold;\n  cursor: pointer;\n}\n"] = false
-    document.head.removeChild(__vueify_style__)
-  })
-  if (!module.hot.data) {
-    hotAPI.createRecord("_v-5641c0f0", module.exports)
-  } else {
-    hotAPI.update("_v-5641c0f0", module.exports, (typeof module.exports === "function" ? module.exports.options : module.exports).template)
-  }
-})()}
-},{"vue":69,"vue-hot-reload-api":2,"vueify/lib/insert-css":71}],73:[function(require,module,exports){
 'use strict';
 
 var _vue = require('vue');
@@ -11893,173 +11845,164 @@ _vue2.default.use(_vueResource2.default);
 //   }
 // });
 
-// new Vue({
-//     el: '#app2',
-//     data: {
-//         message: 'Hello'
-//     }
-// });
-// // Vue.component('counter',{
-// //   template:'#counter-template',
-// //   props:['subject'],
-// //   data:function() {
-// //     return {
-// //       count:0
-// //     };
-// //   }
-// // });
-// new Vue({
-//     el: '#app3',
-//     data: {
-//         points: 50,
-//         first: 'Xiajun',
-//         last: 'Yan',
-//         fullname: 'Xiajun Yan',
-//     },
-//     computed: {
-//         skill: function() {
-//             if (this.points <= 50) {
-//                 return 'B';
-//             }
-//             return 'A';
-//         },
-//         fullname: function() {
-//             return this.first + ' ' + this.last;
-//         },
-//     },
-//     // watch:{
-//     //   first:function(first){
-//     //     this.fullname = first + ' ' + this.last;
-//     //   },
-//     //   last:function(last){
-//     //     this.fullname =   this.first + ' ' + last;
-//     //   },
-//     // },
-//     methods: {
-//         handleIt: function() {
-//             alert('Handled');
-//         },
-//         minusCount: function() {
-//             this.count -= 1;
-//         }
-//     },
-//     components: {
-//         counter: {
-//             template: '#counter-template',
-//             props: ['subject'],
-//             data: function() {
-//                 return {
-//                     count: 0
-//                 };
-//             }
-//         }
-//     }
-// });
-// new Vue({
-//     el: '#app',
-//     data: {
-//         newTodo: '',
-//         todos: [{
-//             text: 'Add some todos'
-//         }]
-//     },
-//     methods: {
-//         addTodo: function() {
-//             var text = this.newTodo.trim()
-//             if (text) {
-//                 this.todos.push({
-//                     text: text
-//                 })
-//                 this.newTodo = ''
-//             }
-//         },
-//         removeTodo: function(index) {
-//             this.todos.splice(index, 1)
-//         }
-//     }
-// });
+new _vue2.default({
+    el: '#app2',
+    data: {
+        message: 'Hello'
+    }
+});
+_vue2.default.component('counter', {
+    template: '#counter-template',
+    props: ['subject'],
+    data: function data() {
+        return {
+            count: 0
+        };
+    }
+});
+new _vue2.default({
+    el: '#app3',
+    data: {
+        points: 50,
+        first: 'Xiajun',
+        last: 'Yan',
+        fullname: 'Xiajun Yan'
+    },
+    computed: {
+        skill: function skill() {
+            if (this.points <= 50) {
+                return 'B';
+            }
+            return 'A';
+        },
+        fullname: function fullname() {
+            return this.first + ' ' + this.last;
+        }
+    },
+    watch: {
+        first: function first(_first) {
+            this.fullname = _first + ' ' + this.last;
+        },
+        last: function last(_last) {
+            this.fullname = this.first + ' ' + _last;
+        }
+    },
+    methods: {
+        handleIt: function handleIt() {
+            alert('Handled');
+        },
+        minusCount: function minusCount() {
+            this.count -= 1;
+        }
+    },
+    components: {
+        counter: {
+            template: '#counter-template',
+            props: ['subject'],
+            data: function data() {
+                return {
+                    count: 0
+                };
+            }
+        }
+    }
+});
+new _vue2.default({
+    el: '#app',
+    data: {
+        newTodo: '',
+        todos: [{
+            text: 'Add some todos'
+        }]
+    },
+    methods: {
+        addTodo: function addTodo() {
+            var text = this.newTodo.trim();
+            if (text) {
+                this.todos.push({
+                    text: text
+                });
+                this.newTodo = '';
+            }
+        },
+        removeTodo: function removeTodo(index) {
+            this.todos.splice(index, 1);
+        }
+    }
+});
 
-// new Vue({
-//     el:'#app4',
-//     data: {
-//         // store a list of plans
-//         plans:[
-//             { name:'Enterprise', price:100 },
-//             { name:'Pro', price:50 },
-//             { name:'Personal', price:10 },
-//             { name:'Free', price:0 },
-//         ],
-//         active: {}
-//     },
-//     components: {
-//         plan: {
-//             // template: '#plan-template',
+new _vue2.default({
+    el: '#app4',
+    data: {
+        // store a list of plans
+        plans: [{ name: 'Enterprise', price: 100 }, { name: 'Pro', price: 50 }, { name: 'Personal', price: 10 }, { name: 'Free', price: 0 }],
+        active: {}
+    },
+    components: {
+        plan: {
+            // template: '#plan-template',
 
-//             props:['plan','active'],
+            props: ['plan', 'active'],
 
-//             computed: {
-//                 isUpgrade : function() {
-//                     return this.plan.price > this.active.price;
-//                     //this.plan.price
-//                     //this.active.price
-//                 }
-//             },
+            computed: {
+                isUpgrade: function isUpgrade() {
+                    return this.plan.price > this.active.price;
+                    //this.plan.price
+                    //this.active.price
+                }
+            },
 
-//             methods: {
-//                 setActivePlan: function(){
-//                     this.active = this.plan;
-//                 }
-//             }
-//         }
-//     }
-// });
+            methods: {
+                setActivePlan: function setActivePlan() {
+                    this.active = this.plan;
+                }
+            }
+        }
+    }
+});
 
-// new Vue({
-//     el:"#app5",
-//     data: {
-//         tasks: [
-//            { body: 'Go to the store', completed:false,price:100},
-//            { body: 'Go to the bank', completed:false,price:100 },
-//            { body: 'Go to the doctor', completed:true,price:100 }
-//         ]
-//     },
-//     components: {
-//         taskcomp: {
-//             template:'#tasks-template',
-//             props:['list'],
-//             computed: {
-//                 remaining: function() {
-//                       // completedTasks =
-//                       // inProgress = !
-//                     var vm = this;
-//                     //  return this.list.filter(function(task){
-//                     //     return !vm.isCompleted(task);
-//                     // }).length;
-//                     return this.list.filter(this.isInProgress).length;
-//                 }
-//             },
-//             methods: {
-//                 setPrice: function(task) {
-//                     task.price = 50;
-//                 },
-//                 isCompleted:function(task) {
-//                     return task.completed;
-//                 },
-//                 isInProgress:function(task) {
-//                     return !this.isCompleted(task);
-//                 },
+new _vue2.default({
+    el: "#app5",
+    data: {
+        tasks: [{ body: 'Go to the store', completed: false, price: 100 }, { body: 'Go to the bank', completed: false, price: 100 }, { body: 'Go to the doctor', completed: true, price: 100 }]
+    },
+    components: {
+        taskcomp: {
+            template: '#tasks-template',
+            props: ['list'],
+            computed: {
+                remaining: function remaining() {
+                    // completedTasks =
+                    // inProgress = !
+                    var vm = this;
+                    //  return this.list.filter(function(task){
+                    //     return !vm.isCompleted(task);
+                    // }).length;
+                    return this.list.filter(this.isInProgress).length;
+                }
+            },
+            methods: {
+                setPrice: function setPrice(task) {
+                    task.price = 50;
+                },
+                isCompleted: function isCompleted(task) {
+                    return task.completed;
+                },
+                isInProgress: function isInProgress(task) {
+                    return !this.isCompleted(task);
+                },
 
-//                 deleteTask: function(task) {
-//                     this.list.$remove(task);
-//                 },
+                deleteTask: function deleteTask(task) {
+                    this.list.$remove(task);
+                },
 
-//                 clearCompleted: function(){
-//                     this.list = this.list.filter(this.isInProgress);
-//                 }
-//             }
-//         }   
-//     }
-// });
+                clearCompleted: function clearCompleted() {
+                    this.list = this.list.filter(this.isInProgress);
+                }
+            }
+        }
+    }
+});
 
 _vue2.default.component('tasks', {
     template: '#tasks-template',
@@ -12163,37 +12106,43 @@ _vue2.default.component('message', {
         }
     }
 });
-new _vue2.default({
+// new Vue({
 
-    el: '#app',
+//     el:'#app',
 
-    data: {
-        people: [{ name: 'Joe', role: 'admin' }, { name: 'Susan', role: 'admin' }, { name: 'Frank', role: 'student' }, { name: 'Jeffrey', role: 'admin' }],
-        messages: []
-    },
+//     data: {
+//         people: [
+//             {name:'Joe',role:'admin'},
+//             {name:'Susan',role:'admin'},
+//             {name:'Frank',role:'student'},
+//             {name:'Jeffrey',role:'admin'},
 
-    methods: {
+//         ],
+//         messages: []
+//     },
 
-        handleNewMessage: function handleNewMessage(message) {
-            this.messages.push(message);
-            // console.log('Parent is handling ' + message);
-        }
-    },
+//     methods:{
 
-    // events: {
-    //     "new-message": function(message) {
-    //         console.log('Parent is handling ' + message);
-    //     }
+//         handleNewMessage: function(message)  {
+//             this.messages.push(message);
+//             // console.log('Parent is handling ' + message);
+//         }
+//     },
 
-    // },
+//     // events: {
+//     //     "new-message": function(message) {
+//     //         console.log('Parent is handling ' + message);
+//     //     }
 
-    components: { Alert: _Alert2.default },
+//     // },
 
-    ready: function ready() {
+//     components: { Alert },
 
-        // alert('Ready to go!');
-    }
-});
+//     ready() {
+
+//         // alert('Ready to go!');
+//     }
+// })
 
 //Lesson
 // Vue.directive('ajax',{
@@ -12204,7 +12153,7 @@ new _vue2.default({
 
 //     },
 //     //Next, as soon as that finishs, the update() method will
-//     //instantly be called, and theway they work is : this will
+//     //instantly be called, and the way they work is : this will
 //     //repeatly be called, whenever the bind value(value) changes
 //     update: function(value) {
 
@@ -12295,6 +12244,113 @@ new _vue2.default({
     }
 });
 
-},{"./components/Alert.vue":72,"vue":69,"vue-resource":3}]},{},[73]);
+var min = _vue2.default.extend({
+    template: '#clock-min'
+});
+var hour = _vue2.default.extend({
+    template: '#clock-hour'
+});
+var sec = _vue2.default.extend({
+    template: '#clock-sec'
+});
+
+var time = _vue2.default.extend({
+    template: '#clock-time',
+    props: ['myMessage']
+});
+
+_vue2.default.component('clock', {
+    template: '#clock-template',
+    components: {
+        'min-component': min,
+        'hour-component': hour,
+        'sec-component': sec,
+        'time-component': time
+    },
+    data: function data() {
+        return { time: "00:00:00" };
+    },
+    ready: function ready() {
+        this.startTime();
+    },
+
+    methods: {
+        startTime: function startTime() {
+            var min = this.$refs.min.$el,
+                sec = this.$refs.sec.$el,
+                hour = this.$refs.hour.$el;
+            var now = new Date(),
+                hValue = now.getHours(),
+                mValue = now.getMinutes(),
+                sValue = now.getSeconds();
+            setTimeout(this.startTime, 1000);
+
+            // 数字时间
+            mValue = this.checkTime(mValue);
+            sValue = this.checkTime(sValue);
+            this.time = hValue + ":" + mValue + ":" + sValue;
+        },
+        checkTime: function checkTime(i) {
+            if (i < 10) {
+                i = "0" + i;
+            };
+            return i;
+        }
+    }
+});
+
+var parent = new _vue2.default({
+    el: '#clock'
+});
+
+},{"./components/Alert.vue":73,"vue":69,"vue-resource":3}],73:[function(require,module,exports){
+var __vueify_insert__ = require("vueify/lib/insert-css")
+var __vueify_style__ = __vueify_insert__.insert(".Alert {\n  position: relative;\n  background: #ddd;\n  border: 1px solid #c7c7c7;\n  padding: 1em;\n}\n.Alert--Success {\n  background: #8cff8c;\n  border: 1px solid #00f300;\n}\n.Alert--Error {\n  background: #ffb3b3;\n  border: 1px solid #ff4d4d;\n}\n.Alert__close {\n  position: absolute;\n  top: 1em;\n  right: 1em;\n  font-weight: bold;\n  cursor: pointer;\n}\n")
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = {
+
+  props: ['type'],
+
+  data: function data() {
+    return {
+      show: true
+    };
+  },
+
+
+  computed: {
+    alertClasses: function alertClasses() {
+      var type = this.type;
+
+      return {
+        'Alert': true,
+        'Alert--Success': type == 'success',
+        'Alert--Error': type == 'error'
+      };
+    }
+  }
+
+};
+if (module.exports.__esModule) module.exports = module.exports.default
+;(typeof module.exports === "function"? module.exports.options: module.exports).template = "\n<div :class=\"alertClasses\" v-show=\"show\">\n      <slot></slot>\n      <span class=\"Alert__close\" @click=\"show = false\">x</span>\n    </div> \n"
+if (module.hot) {(function () {  module.hot.accept()
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), true)
+  if (!hotAPI.compatible) return
+  module.hot.dispose(function () {
+    __vueify_insert__.cache[".Alert {\n  position: relative;\n  background: #ddd;\n  border: 1px solid #c7c7c7;\n  padding: 1em;\n}\n.Alert--Success {\n  background: #8cff8c;\n  border: 1px solid #00f300;\n}\n.Alert--Error {\n  background: #ffb3b3;\n  border: 1px solid #ff4d4d;\n}\n.Alert__close {\n  position: absolute;\n  top: 1em;\n  right: 1em;\n  font-weight: bold;\n  cursor: pointer;\n}\n"] = false
+    document.head.removeChild(__vueify_style__)
+  })
+  if (!module.hot.data) {
+    hotAPI.createRecord("_v-5641c0f0", module.exports)
+  } else {
+    hotAPI.update("_v-5641c0f0", module.exports, (typeof module.exports === "function" ? module.exports.options : module.exports).template)
+  }
+})()}
+},{"vue":69,"vue-hot-reload-api":2,"vueify/lib/insert-css":71}]},{},[72]);
 
 //# sourceMappingURL=app.js.map
